@@ -1,59 +1,31 @@
-'use client';
+import { ProjectList } from "../../components/projects/ProjectList";
 
-import { FolderKanban, FileText, BarChart3 } from 'lucide-react';
+export const metadata = {
+  title: "Daftar Proyek | SIVANA",
+  description: "Kelola proyek perencanaan infrastruktur EV Anda.",
+};
 
 export default function ProjectsPage() {
-    return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="container-custom py-20">
-                <div className="max-w-4xl mx-auto text-center">
-                    <div className="w-24 h-24 mx-auto mb-8 rounded-2xl gradient-primary flex items-center justify-center">
-                        <FolderKanban className="w-12 h-12 text-white" />
-                    </div>
+  return (
+    <main className="min-h-screen relative overflow-hidden bg-slate-50">
+      {/* Abstract Background Shapes */}
+      <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full bg-brand-light/10 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-brand-primary/5 blur-3xl pointer-events-none" />
 
-                    <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                        <span className="gradient-text">Proyek</span>
-                    </h1>
-
-                    <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
-                        Halaman ini akan berisi daftar proyek, detail proyek, dan fitur report generation.
-                    </p>
-
-                    <div className="grid md:grid-cols-3 gap-6 mb-12">
-                        <div className="glass-card p-6">
-                            <FolderKanban className="w-8 h-8 text-[var(--color-blue)] mx-auto mb-4" />
-                            <h3 className="font-semibold mb-2">Kelola Proyek</h3>
-                            <p className="text-sm text-gray-600">Create, view, edit projects</p>
-                        </div>
-                        <div className="glass-card p-6">
-                            <BarChart3 className="w-8 h-8 text-[var(--color-blue)] mx-auto mb-4" />
-                            <h3 className="font-semibold mb-2">Bandingkan Lokasi</h3>
-                            <p className="text-sm text-gray-600">Side-by-side comparison</p>
-                        </div>
-                        <div className="glass-card p-6">
-                            <FileText className="w-8 h-8 text-[var(--color-blue)] mx-auto mb-4" />
-                            <h3 className="font-semibold mb-2">Generate Laporan</h3>
-                            <p className="text-sm text-gray-600">Professional PDF reports</p>
-                        </div>
-                    </div>
-
-                    <div className="glass-card p-8 text-left">
-                        <h2 className="text-2xl font-bold mb-4">Coming Soon</h2>
-                        <p className="text-gray-600 mb-4">
-                            Fitur Projects akan diimplementasikan oleh Developer 3, meliputi:
-                        </p>
-                        <ul className="space-y-2 text-gray-600">
-                            <li>✅ Project list dengan search dan filter</li>
-                            <li>✅ Create new project</li>
-                            <li>✅ Project details dengan location list</li>
-                            <li>✅ Comparison view untuk multiple locations</li>
-                            <li>✅ Report generation (PDF)</li>
-                            <li>✅ Project history dan notes</li>
-                            <li>✅ LocalStorage + Supabase hybrid storage</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+      {/* Page Header with Glass Effect */}
+      <div className="relative sticky top-0 z-10 glass-panel border-b-0">
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold text-brand-dark tracking-tight">Daftar Proyek</h1>
+          <p className="text-brand-primary/80 mt-2 text-lg">
+            Kelola dan pantau semua proyek perencanaan Anda di satu tempat.
+          </p>
         </div>
-    );
+      </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8 relative z-0">
+        <ProjectList />
+      </div>
+    </main>
+  );
 }
