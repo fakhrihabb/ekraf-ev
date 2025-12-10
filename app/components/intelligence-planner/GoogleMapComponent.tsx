@@ -19,23 +19,6 @@ export default function GoogleMapComponent({ onMapLoad, onMapClick }: GoogleMapC
     // Default center: DKI Jakarta
     const center = useMemo(() => ({ lat: -6.2088, lng: 106.8456 }), []);
 
-    const mapOptions = useMemo<google.maps.MapOptions>(
-        () => ({
-            disableDefaultUI: false,
-            clickableIcons: true,
-            scrollwheel: true,
-            mapTypeControl: true,
-            mapTypeControlOptions: {
-                style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-                position: google.maps.ControlPosition.TOP_RIGHT,
-            },
-            zoomControl: true,
-            streetViewControl: true,
-            fullscreenControl: true,
-        }),
-        []
-    );
-
     if (loadError) {
         return (
             <div className="flex items-center justify-center h-full bg-gray-100">
@@ -59,6 +42,21 @@ export default function GoogleMapComponent({ onMapLoad, onMapClick }: GoogleMapC
             </div>
         );
     }
+
+    // Map options - only created after script is loaded
+    const mapOptions: google.maps.MapOptions = {
+        disableDefaultUI: false,
+        clickableIcons: true,
+        scrollwheel: true,
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+            style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+            position: google.maps.ControlPosition.TOP_RIGHT,
+        },
+        zoomControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+    };
 
     return (
         <GoogleMap
