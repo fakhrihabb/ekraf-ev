@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Project, Location } from "../../lib/types";
 import { SupabaseService } from "../../lib/storage";
 import { ProjectHeader } from "@/components/projects/details/ProjectHeader";
@@ -12,11 +12,19 @@ import { ComparisonCharts } from "@/components/projects/details/ComparisonCharts
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { id } = use(params);
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'list' | 'comparison'>('list');
+  
+  // Initialize tab from URL or default to 'list'
+  const activeTab = searchParams.get('tab') === 'comparison' ? 'comparison' : 'list';
+
+  const setActiveTab = (tab: 'list' | 'comparison') => {
+      // Update URL without refreshing
+      router.push(`/projects/${id}?tab=${tab}`, { scroll: false });
+  };
 
   useEffect(() => {
     fetchProject();
