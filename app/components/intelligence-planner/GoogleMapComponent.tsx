@@ -52,9 +52,10 @@ export default function GoogleMapComponent({ onMapLoad, onMapClick }: GoogleMapC
         mapTypeControlOptions: {
             style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
             position: google.maps.ControlPosition.TOP_RIGHT,
+            mapTypeIds: ['roadmap', 'satellite', 'hybrid'],
         },
         zoomControl: true,
-        streetViewControl: true,
+        streetViewControl: false, // Removed - not relevant for location planning
         fullscreenControl: true,
     };
 
