@@ -22,7 +22,7 @@ export interface Location {
   address?: string;
   created_at: string;
   // Analysis data often comes joined
-  analysis?: Analysis; 
+  analysis?: Analysis;
   // For UI convenience
   suitability_score?: number; // mapped from analysis.overall_score
   status?: 'recommended' | 'rejected' | 'pending';
@@ -38,6 +38,7 @@ export interface Project {
   updated_at: string;
   locations: Location[];
   location_count: number;
+  average_score?: number; // Average overall_score from analyses
 }
 
 export interface ProjectReport {

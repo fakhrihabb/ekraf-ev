@@ -37,28 +37,44 @@ export const SupabaseService = {
     const { data, error } = await supabase
       .from('projects')
       .select('*, locations(count)');
-    
+
     if (error) {
       console.error('Error fetching projects from Supabase:', error);
       return [];
     }
 
-    // Map Supabase response to Project interface
-    return (data || []).map((p: any) => ({
-      ...p,
-      locations: [], // Placeholder as we don't fetch full locations list for the project list
-      location_count: p.locations ? p.locations[0]?.count : 0
+    // Fetch average scores for each project
+    const projectsWithScores = await Promise.all((data || []).map(async (p: any) => {
+      // Get average overall_score from analyses for this project's locations
+      const { data: avgData } = await supabase
+        .from('analyses')
+        .select('overall_score, location_id, locations!inner(project_id)')
+        .eq('locations.project_id', p.id);
+
+      const scores = avgData?.map((a: any) => a.overall_score).filter((s: number) => s != null) || [];
+      const average_score = scores.length > 0
+        ? scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length
+        : null;
+
+      return {
+        ...p,
+        locations: [], // Placeholder as we don't fetch full locations list for the project list
+        location_count: p.locations ? p.locations[0]?.count : 0,
+        average_score
+      };
     }));
+
+    return projectsWithScores;
   },
 
   saveProject: async (project: Project): Promise<void> => {
     // Prepare data for insertion (exclude non-column fields)
     const { locations, location_count, ...projectData } = project;
-    
+
     const { error } = await supabase
       .from('projects')
       .insert([projectData]);
-      
+
     if (error) {
       console.error('Error saving project to Supabase:', error);
       throw error;
@@ -70,7 +86,7 @@ export const SupabaseService = {
       .from('projects')
       .delete()
       .eq('id', id);
-      
+
     if (error) {
       console.error('Error deleting project from Supabase:', error);
       throw error;
@@ -174,7 +190,7 @@ export const SupabaseService = {
           accessibility_score: Math.floor(Math.random() * 100),
           competition_score: Math.floor(Math.random() * 100),
         }]);
-      
+
       if (anaError) {
         console.error('Error adding analysis for location:', anaError);
         // Note: Location was added, but analysis failed. 

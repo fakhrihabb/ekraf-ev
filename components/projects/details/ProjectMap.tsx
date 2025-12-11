@@ -21,8 +21,6 @@ export const ProjectMap = ({ locations, onLocationSelect, selectedLocationId }: 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     libraries,
-    version: 'beta', // Use beta to match IntelligencePlanner and avoid duplicate script loading
-    id: 'google-map-script' // Adding an ID helps prevent duplicates too
   });
 
   // Center on last added location, or default to Jakarta if no locations

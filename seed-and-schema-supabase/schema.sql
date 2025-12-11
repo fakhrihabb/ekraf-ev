@@ -36,9 +36,11 @@ CREATE TABLE IF NOT EXISTS analyses (
   accessibility_score INTEGER NOT NULL CHECK (accessibility_score >= 0 AND accessibility_score <= 100),
   competition_score INTEGER NOT NULL CHECK (competition_score >= 0 AND competition_score <= 100),
   overall_score INTEGER NOT NULL CHECK (overall_score >= 0 AND overall_score <= 100),
+  solar_score INTEGER CHECK (solar_score >= 0 AND solar_score <= 100),
   insights_text TEXT,
   recommendation TEXT,
   financial_data_json JSONB,
+  solar_analysis_json JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

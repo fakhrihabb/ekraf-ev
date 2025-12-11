@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, BarChart3, Save, Loader2 } from 'lucide-reac
 import { useState } from 'react';
 import { SaveToProjectModal } from '@/components/projects/SaveToProjectModal';
 import { Location, Analysis } from '@/app/lib/types';
+import SolarAnalysisPanel from './SolarAnalysisPanel';
 
 interface RightSidebarProps {
     isOpen: boolean;
@@ -90,6 +91,14 @@ export default function RightSidebar({ isOpen, onToggle, analysisResults, isAnal
                                                     {scores.competition}/100
                                                 </span>
                                             </div>
+                                            {analysisResults?.solarScore !== undefined && analysisResults?.solarScore !== null && (
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-xs text-gray-600">☀️ Solar</span>
+                                                    <span className={`text-xs font-medium ${analysisResults.solarScore >= 70 ? 'text-green-600' : analysisResults.solarScore >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                                                        {analysisResults.solarScore}/100
+                                                    </span>
+                                                </div>
+                                            )}
                                             <div className="border-t pt-2 mt-2">
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-sm font-medium text-gray-700">Total</span>
@@ -100,6 +109,14 @@ export default function RightSidebar({ isOpen, onToggle, analysisResults, isAnal
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Solar Analysis Panel */}
+                                    {analysisResults?.solarAnalysis && analysisResults?.solarScore !== undefined && (
+                                        <SolarAnalysisPanel
+                                            solarAnalysis={analysisResults.solarAnalysis}
+                                            solarScore={analysisResults.solarScore}
+                                        />
+                                    )}
 
                                     {/* AI Insights */}
                                     {insights && (
