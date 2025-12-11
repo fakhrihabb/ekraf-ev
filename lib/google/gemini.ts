@@ -39,26 +39,27 @@ export async function generateInsights(
     }
 
     try {
-        const model = client.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const model = client.getGenerativeModel({
+            model: 'gemini-2.0-flash',
+            generationConfig: {
+                maxOutputTokens: 400, // Limit to ~200 words
+                temperature: 0.7,
+            },
+        });
 
-        const prompt = `Kamu adalah analis lokasi untuk infrastruktur kendaraan listrik di Indonesia.
+        // Optimized prompt (shorter, more specific)
+        const prompt = `Analisis lokasi infrastruktur EV di Indonesia:
+Lokasi: ${address}
+Skor: Permintaan ${scores.demand}, Grid ${scores.grid}, Akses ${scores.accessibility}, Kompetisi ${scores.competition}, Overall ${scores.overall}
+Rekomendasi: ${recommendation.type}
 
-Data Analisis:
-- Lokasi: ${address}
-- Skor Permintaan: ${scores.demand}/100
-- Skor Grid: ${scores.grid}/100
-- Skor Aksesibilitas: ${scores.accessibility}/100
-- Skor Kompetisi: ${scores.competition}/100
-- Skor Keseluruhan: ${scores.overall}/100
-- Rekomendasi: ${recommendation.type}
+Tulis analisis 150-200 kata (Bahasa Indonesia) yang mencakup:
+1. Kekuatan utama lokasi
+2. Risiko/kekhawatiran
+3. Perbandingan dengan area lain
+4. Rekomendasi spesifik
 
-Berikan analisis 150-200 kata dalam Bahasa Indonesia yang mencakup:
-1. Mengapa lokasi ini mendapat skor tersebut (sebutkan kekuatan spesifik)
-2. Risiko atau kekhawatiran utama
-3. Perbandingan dengan rata-rata area
-4. Rekomendasi spesifik untuk pengembangan
-
-Gunakan bahasa profesional namun mudah dipahami. Jangan menyebutkan angka skor secara berlebihan.`;
+Gunakan bahasa profesional, jangan sebutkan angka berlebihan.`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;

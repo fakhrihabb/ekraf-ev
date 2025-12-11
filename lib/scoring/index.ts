@@ -10,7 +10,7 @@ import { fetchNearbyPOIs, calculateDemandScoreFromPOIs, checkParkingAvailability
 import { calculateHighwayDistance, calculateAccessibilityScoreFromData } from '@/lib/google/distance-matrix';
 import { findNearestSubstation, calculateGridScore as calcGridScore } from '@/lib/scoring/grid-data';
 import { supabase } from '@/app/lib/supabase';
-import { apiCache } from '@/lib/cache';
+import { apiCache, CacheTTL } from '@/lib/cache';
 
 // ============================================================================
 // Scoring Functions (Day 2 - Full Implementation)
@@ -33,8 +33,8 @@ export async function calculateDemandScore(
         const pois = await fetchNearbyPOIs(latitude, longitude, 2000);
         const score = calculateDemandScoreFromPOIs(pois);
 
-        // Cache the result
-        apiCache.set(cacheKey, score);
+        // Cache with 1 hour TTL (businesses can change)
+        apiCache.set(cacheKey, score, CacheTTL.DEMAND);
         return score;
     } catch (error) {
         console.error('Error calculating demand score:', error);
