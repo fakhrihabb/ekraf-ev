@@ -1,7 +1,7 @@
 'use client';
 
 import { useLoadScript, GoogleMap, Marker, LoadScriptProps } from '@react-google-maps/api';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import {
     Station,
     CandidateLocation,
@@ -30,6 +30,10 @@ interface GoogleMapComponentProps {
 
 const libraries: LoadScriptProps['libraries'] = ['places'];
 
+// Default center: DKI Jakarta
+const DEFAULT_CENTER = { lat: -6.2088, lng: 106.8456 };
+const DEFAULT_ZOOM = 11;
+
 export default function GoogleMapComponent({
     stations,
     candidates,
@@ -44,24 +48,94 @@ export default function GoogleMapComponent({
 }: GoogleMapComponentProps) {
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [is3DMode, setIs3DMode] = useState(false);
+
+    // Store the view state (center, zoom, etc.) to persist across re-renders/remounts
+    const viewStateRef = useRef({
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+        heading: 0,
+        tilt: 0
+    });
+
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
         libraries,
         version: 'beta', // Required for photorealistic 3D
     });
 
-    // Default center: DKI Jakarta
-    const center = useMemo(() => ({ lat: -6.2088, lng: 106.8456 }), []);
-
-    // Toggle 3D mode
+    // Toggle 3D mode logic
     const toggle3DMode = useCallback(() => {
-        setIs3DMode(!is3DMode);
-    }, [is3DMode]);
+        if (map) {
+            // Check if getCenter returns a value before accessing
+            const currentCenter = map.getCenter();
+
+            // Capture current state before switching
+            viewStateRef.current = {
+                center: currentCenter ? currentCenter.toJSON() : viewStateRef.current.center,
+                zoom: map.getZoom() || viewStateRef.current.zoom,
+                heading: map.getHeading() || 0,
+                tilt: map.getTilt() || 0
+            };
+        }
+        setIs3DMode(prev => !prev);
+    }, [map]);
 
     // Handle map load
     const handleMapLoad = useCallback((mapInstance: google.maps.Map) => {
         setMap(mapInstance);
     }, []);
+
+    // Filter stations by type and layer visibility
+    const visibleStations = stations.filter((station) => {
+        if (station.type === 'SPKLU') return layers.spklu;
+        if (station.type === 'SPBKLU') return layers.spbklu;
+        return false;
+    });
+
+    // Filter candidates by layer visibility
+    const visibleCandidates = layers.candidates ? candidates : [];
+
+    // Calculate map options based on mode
+    const mapOptions = useMemo<google.maps.MapOptions>(() => {
+        if (!isLoaded) {
+            return {};
+        }
+
+        // Base options common to both modes
+        const baseOptions: google.maps.MapOptions = {
+            disableDefaultUI: false,
+            clickableIcons: true,
+            scrollwheel: true,
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+                style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+                position: google.maps.ControlPosition.TOP_RIGHT,
+                mapTypeIds: ['roadmap', 'satellite'],
+            },
+            zoomControl: true,
+            streetViewControl: false,
+            fullscreenControl: false,
+        };
+
+        if (is3DMode) {
+            return {
+                ...baseOptions,
+                mapId: process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID,
+                tilt: 45, // Initial tilt for 3D mode
+                headingInteractionEnabled: true,
+                tiltInteractionEnabled: true,
+            };
+        } else {
+            return {
+                ...baseOptions,
+                mapId: undefined, // undefined to ensure Raster map (no Vector)
+                tilt: 0,
+                headingInteractionEnabled: false,
+                tiltInteractionEnabled: false,
+                rotateControl: false,
+            };
+        }
+    }, [is3DMode, isLoaded]);
 
     if (loadError) {
         return (
@@ -87,35 +161,6 @@ export default function GoogleMapComponent({
         );
     }
 
-
-    // Map options - 2D mode (no 3D buildings)
-    const mapOptions: google.maps.MapOptions = {
-        disableDefaultUI: false,
-        clickableIcons: true,
-        scrollwheel: true,
-        mapTypeControl: true,
-        mapTypeControlOptions: {
-            style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-            position: google.maps.ControlPosition.TOP_RIGHT,
-            mapTypeIds: ['roadmap', 'satellite'],
-        },
-        zoomControl: true,
-        streetViewControl: false,
-        fullscreenControl: false,
-        // NO mapId here - this prevents 3D buildings in 2D mode
-        tilt: 0, // Start in 2D mode
-    };
-
-    // Filter stations by type and layer visibility
-    const visibleStations = stations.filter((station) => {
-        if (station.type === 'SPKLU') return layers.spklu;
-        if (station.type === 'SPBKLU') return layers.spbklu;
-        return false;
-    });
-
-    // Filter candidates by layer visibility
-    const visibleCandidates = layers.candidates ? candidates : [];
-
     return (
         <>
             {/* 3D Toggle Button */}
@@ -124,11 +169,12 @@ export default function GoogleMapComponent({
             {/* Screenshot Button */}
             <ScreenshotButton mapContainerRef={mapContainerRef} />
 
-            {/* Always render GoogleMap */}
+            {/* Google Map - Key change forces remount between modes */}
             <GoogleMap
+                key={is3DMode ? 'map-3d' : 'map-2d'}
                 mapContainerStyle={{ width: '100%', height: '100%' }}
-                center={center}
-                zoom={11}
+                center={viewStateRef.current.center}
+                zoom={viewStateRef.current.zoom}
                 options={mapOptions}
                 onClick={onMapClick}
                 onLoad={handleMapLoad}
@@ -173,14 +219,11 @@ export default function GoogleMapComponent({
                 )}
             </GoogleMap>
 
-            {/* 3D View Overlay - only shows controls */}
-            {is3DMode && map && (
-                <Map3DView
-                    center={center}
-                    map={map}
-                    onClose={() => setIs3DMode(false)}
-                />
-            )}
+            {/* 3D View Overlay - Controls & Instructions */}
+            <Map3DView
+                map={map}
+                is3DMode={is3DMode}
+            />
         </>
     );
 }

@@ -1,90 +1,95 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { Compass, RotateCcw, RotateCw, ChevronUp, ChevronDown } from 'lucide-react';
+import { useCallback } from 'react';
 
 interface Map3DViewProps {
-    center: { lat: number; lng: number };
     map: google.maps.Map | null;
-    onClose: () => void;
+    is3DMode: boolean;
 }
 
-export default function Map3DView({ center, map, onClose }: Map3DViewProps) {
-    const [isReady, setIsReady] = useState(false);
-
-    useEffect(() => {
+export default function Map3DView({ map, is3DMode }: Map3DViewProps) {
+    const handleRotate = useCallback((direction: 'cw' | 'ccw') => {
         if (!map) return;
+        const currentHeading = map.getHeading() || 0;
+        const adjustment = direction === 'cw' ? 45 : -45;
+        map.setHeading(currentHeading + adjustment);
+    }, [map]);
 
-        // Enable Map ID for 3D buildings
-        map.setOptions({
-            mapId: process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID,
-        });
-
-        // Enable 3D tilt
-        map.setTilt(45);
-
-        // Enable rotation and heading controls
-        map.setOptions({
-            rotateControl: true,
-            rotateControlOptions: {
-                position: google.maps.ControlPosition.LEFT_CENTER,
-            },
-            headingInteractionEnabled: true,
-            tiltInteractionEnabled: true,
-        });
-
-        // Smooth animation to the center
-        map.panTo(center);
-
-        // Set appropriate zoom for 3D view
-        const currentZoom = map.getZoom() || 15;
-        if (currentZoom < 15) {
-            map.setZoom(15);
-        }
-
-        setIsReady(true);
-
-        // Cleanup: reset to 2D mode when component unmounts
-        return () => {
-            if (map) {
-                map.setTilt(0);
-                map.setOptions({
-                    mapId: undefined, // Remove Map ID to disable 3D buildings
-                    rotateControl: false,
-                    headingInteractionEnabled: false,
-                    tiltInteractionEnabled: false,
-                });
-                map.setHeading(0); // Reset rotation
-            }
-        };
-    }, [map, center]);
+    const handleTilt = useCallback((direction: 'up' | 'down') => {
+        if (!map) return;
+        const currentTilt = map.getTilt() || 0;
+        // Tilt range is typically 0 to 67.5 depending on zoom
+        const adjustment = direction === 'down' ? 20 : -20;
+        map.setTilt(Math.min(67.5, Math.max(0, currentTilt + adjustment)));
+    }, [map]);
 
     return (
-        <div className="absolute top-4 left-4 z-10">
-            {/* Close button */}
-            <button
-                onClick={onClose}
-                className="glass-panel px-4 py-2.5 rounded-lg flex items-center gap-2 hover:bg-white/90 transition-all shadow-md hover:shadow-lg"
-            >
-                <span className="text-sm font-medium text-gray-700">← Kembali ke 2D</span>
-            </button>
+        <>
+            {/* Custom 3D Controls - Right Side */}
+            <div className="absolute top-1/2 right-4 -translate-y-1/2 z-10 flex flex-col gap-2">
+                {is3DMode && (
+                    <>
+                        {/* Tilt Controls */}
+                        <div className="glass-panel p-1 rounded-lg flex flex-col gap-1">
+                            <button
+                                onClick={() => handleTilt('down')}
+                                className="p-2 hover:bg-gray-100 rounded-md transition-colors"
+                                title="Miringkan Bawah (Lebih Datar)"
+                            >
+                                <ChevronUp className="w-5 h-5 text-gray-700" />
+                            </button>
+                            <div className="h-[1px] bg-gray-200 w-full" />
+                            <button
+                                onClick={() => handleTilt('up')}
+                                className="p-2 hover:bg-gray-100 rounded-md transition-colors"
+                                title="Miringkan Atas (Lebih 3D)"
+                            >
+                                <ChevronDown className="w-5 h-5 text-gray-700" />
+                            </button>
+                        </div>
 
-            {!isReady && (
-                <div className="glass-panel px-4 py-2 rounded-lg mt-2">
-                    <p className="text-sm text-gray-600">Mengaktifkan tampilan 3D...</p>
+                        {/* Rotate Controls */}
+                        <div className="glass-panel p-1 rounded-lg flex flex-col gap-1">
+                            <button
+                                onClick={() => handleRotate('ccw')}
+                                className="p-2 hover:bg-gray-100 rounded-md transition-colors"
+                                title="Putar Kiri"
+                            >
+                                <RotateCcw className="w-5 h-5 text-gray-700" />
+                            </button>
+                            <div className="h-[1px] bg-gray-200 w-full" />
+                            <button
+                                onClick={() => handleRotate('cw')}
+                                className="p-2 hover:bg-gray-100 rounded-md transition-colors"
+                                title="Putar Kanan"
+                            >
+                                <RotateCw className="w-5 h-5 text-gray-700" />
+                            </button>
+                        </div>
+                    </>
+                )}
+
+                {/* Compass Reset - Visible in both modes */}
+                <button
+                    onClick={() => map?.setHeading(0)}
+                    className="glass-panel p-2 rounded-lg hover:bg-white/90 transition-all shadow-md"
+                    title="Reset Kompas (Utara)"
+                >
+                    <Compass className="w-6 h-6 text-[var(--color-light-blue)]" />
+                </button>
+            </div>
+
+            {is3DMode && (
+                <div className="absolute top-20 left-4 z-10">
+                    {/* Instructions */}
+                    <div className="glass-panel px-4 py-2 rounded-lg max-w-xs">
+                        <p className="text-xs text-gray-600">
+                            <strong>Kontrol 3D:</strong><br />
+                            • Shift + Drag: Putar peta<br />
+                            • Gunakan kompas di kanan untuk rotasi
+                        </p>
+                    </div>
                 </div>
             )}
-
-            {/* Instructions */}
-            {isReady && (
-                <div className="glass-panel px-4 py-2 rounded-lg mt-2 max-w-xs">
-                    <p className="text-xs text-gray-600">
-                        <strong>Kontrol 3D:</strong><br />
-                        • Shift + Drag: Putar peta<br />
-                        • Ctrl + Drag: Ubah kemiringan<br />
-                        • Gunakan kompas di kiri untuk rotasi
-                    </p>
-                </div>
-            )}
-        </div>
+        </>
     );
 }
