@@ -88,7 +88,7 @@ export default function GoogleMapComponent({
     }
 
 
-    // Map options - only created after script is loaded
+    // Map options - 2D mode (no 3D buildings)
     const mapOptions: google.maps.MapOptions = {
         disableDefaultUI: false,
         clickableIcons: true,
@@ -102,7 +102,7 @@ export default function GoogleMapComponent({
         zoomControl: true,
         streetViewControl: false,
         fullscreenControl: false,
-        mapId: process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID, // Required for 3D buildings
+        // NO mapId here - this prevents 3D buildings in 2D mode
         tilt: 0, // Start in 2D mode
     };
 
