@@ -1,22 +1,219 @@
 @import "tailwindcss";
 
-:root {
-  /* Brand Colors */
-  --color-brand-dark: #0d263f;
-  --color-brand-primary: #134474;
-  --color-brand-light: #276fb0;
+/* Tailwind Base Layers */
+@layer base {
+  :root {
+    --color-dark-blue: #0D263F;
+    --color-blue: #134474;
+    --color-light-blue: #276FB0;
+    --color-white: #FFFFFF;
+    --color-gray-50: #F9FAFB;
+    --color-gray-100: #F3F4F6;
+    --color-gray-200: #E5E7EB;
+    --color-gray-800: #1F2937;
+    --color-glass-bg: rgba(255, 255, 255, 0.1);
+    --color-glass-border: rgba(255, 255, 255, 0.2);
+    --color-glass-dark-bg: rgba(13, 38, 63, 0.1);
+    --color-glass-dark-border: rgba(13, 38, 63, 0.2);
 
-  /* Base Colors */
-  --background: #f8fafc;
-  --foreground: #0d263f;
+    /* Additional brand colors for compatibility */
+    --color-brand-dark: #0d263f;
+    --color-brand-primary: #134474;
+    --color-brand-light: #276fb0;
+    --background: #f8fafc;
+    --foreground: #0d263f;
+    --gradient-brand: linear-gradient(135deg, #0d263f 0%, #134474 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%);
+  }
 
-  /* Gradients */
-  --gradient-brand: linear-gradient(135deg, #0d263f 0%, #134474 100%);
-  --gradient-glass: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.8) 0%,
-    rgba(255, 255, 255, 0.4) 100%
-  );
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--color-white);
+    color: var(--color-gray-800);
+  }
+}
+
+/* Tailwind Components */
+@layer components {
+  .glass {
+    background: var(--color-glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--color-glass-border);
+    border-radius: 16px;
+  }
+
+  .glass-dark {
+    background: var(--color-glass-dark-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--color-glass-dark-border);
+    border-radius: 16px;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  }
+
+  .gradient-primary {
+    background: linear-gradient(135deg, var(--color-dark-blue) 0%, var(--color-blue) 50%, var(--color-light-blue) 100%);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--color-blue) 0%, var(--color-light-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-border {
+    position: relative;
+    background: white;
+    border-radius: 16px;
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    padding: 2px;
+    background: linear-gradient(135deg, var(--color-blue), var(--color-light-blue));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  .btn-primary {
+    background: var(--gradient-brand);
+    color: white;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 4px 12px rgba(19, 68, 116, 0.2);
+  }
+
+  .section-padding {
+    padding: 5rem 1rem;
+  }
+
+  .container-custom {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+}
+
+/* Tailwind Utilities */
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.6s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.6s ease-out;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Media Queries */
+@media (min-width: 768px) {
+  .section-padding {
+    padding: 7rem 2rem;
+  }
+
+  .container-custom {
+    padding: 0 2rem;
+  }
 }
 
 @theme inline {
@@ -27,44 +224,4 @@
   --color-brand-light: var(--color-brand-light);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-  min-height: 100vh;
-}
-
-@utility glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 2px 4px -1px rgba(0, 0, 0, 0.03);
-}
-
-@utility glass-card {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(19, 68, 116, 0.1);
-  box-shadow: 0 4px 6px -1px rgba(13, 38, 63, 0.05);
-}
-
-@utility btn-primary {
-  background: var(--gradient-brand);
-  color: white;
-  transition: all 0.3s ease;
-
-  &:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 4px 12px rgba(19, 68, 116, 0.2);
-  }
 }

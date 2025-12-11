@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^2.0.2",
+    "framer-motion": "^12.23.26",
     "@googlemaps/google-maps-services-js": "^3.4.2",
     "@react-google-maps/api": "^2.20.7",
     "@supabase/supabase-js": "^2.87.1",
