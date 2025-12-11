@@ -1,6 +1,6 @@
 'use client';
 
-import { useLoadScript, GoogleMap, Marker, LoadScriptProps } from '@react-google-maps/api';
+import { useLoadScript, GoogleMap, Marker, LoadScriptProps, InfoWindow } from '@react-google-maps/api';
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import {
     Station,
@@ -17,7 +17,6 @@ import StationInfoWindow from './StationInfoWindow';
 import CandidateInfoWindow from './CandidateInfoWindow';
 import POIInfoWindow from './POIInfoWindow';
 import SearchBar from './SearchBar';
-import LocationSelectionPanel from './LocationSelectionPanel';
 import View3DToggle from './View3DToggle';
 import ScreenshotButton from './ScreenshotButton';
 import Map3DView from './Map3DView';
@@ -65,8 +64,7 @@ export default function GoogleMapComponent({
     const [is3DMode, setIs3DMode] = useState(false);
     const [pois, setPois] = useState<POI[]>([]);
     const [isLoadingPOIs, setIsLoadingPOIs] = useState(false);
-    const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [showLocationPanel, setShowLocationPanel] = useState(false);
+    const [searchResultMarker, setSearchResultMarker] = useState<{ lat: number; lng: number; address: string } | null>(null);
     const placesServiceRef = useRef<PlacesService | null>(null);
 
     // Store the view state (center, zoom, etc.) to persist across re-renders/remounts
@@ -106,25 +104,28 @@ export default function GoogleMapComponent({
             viewStateRef.current.zoom = 16;
         }
 
-        // Show location panel
-        setSelectedLocation({ lat: location.lat, lng: location.lng });
-        setShowLocationPanel(true);
+        // Show search result marker
+        setSearchResultMarker(location);
 
-        // Pass to parent for potential candidate addition
+        // Pass to parent
         onSearchLocationSelect(location);
     }, [map, onSearchLocationSelect]);
 
-    // Handle location panel analyze
-    const handleLocationAnalyze = useCallback(() => {
-        setShowLocationPanel(false);
-        onAnalyze();
-    }, [onAnalyze]);
-
-    // Handle location panel close
-    const handleLocationPanelClose = useCallback(() => {
-        setShowLocationPanel(false);
-        setSelectedLocation(null);
-    }, []);
+    // Handle search result marker click
+    const handleSearchMarkerClick = useCallback(() => {
+        if (searchResultMarker) {
+            onMarkerClick({
+                type: 'candidate',
+                data: {
+                    id: 'search-result',
+                    latitude: searchResultMarker.lat,
+                    longitude: searchResultMarker.lng,
+                    address: searchResultMarker.address,
+                    createdAt: new Date()
+                }
+            });
+        }
+    }, [searchResultMarker, onMarkerClick]);
 
     // Filter stations by type and layer visibility
     const visibleStations = stations.filter((station) => {
@@ -282,15 +283,6 @@ export default function GoogleMapComponent({
             {/* Screenshot Button - Bottom Left (below 3D toggle) */}
             <ScreenshotButton mapContainerRef={mapContainerRef} />
 
-            {/* Location Selection Panel */}
-            {showLocationPanel && selectedLocation && (
-                <LocationSelectionPanel
-                    location={selectedLocation}
-                    onAnalyze={handleLocationAnalyze}
-                    onClose={handleLocationPanelClose}
-                />
-            )}
-
             {/* Google Map - Key change forces remount between modes to ensure clean Map ID switch*/}
             <GoogleMap
                 key={is3DMode ? 'map-3d-vector' : 'map-2d-raster'}
@@ -338,6 +330,16 @@ export default function GoogleMapComponent({
                         />
                     );
                 })}
+
+                {/* Search Result Marker */}
+                {searchResultMarker && (
+                    <Marker
+                        position={{ lat: searchResultMarker.lat, lng: searchResultMarker.lng }}
+                        icon={getMarkerIcon('candidate')}
+                        onClick={handleSearchMarkerClick}
+                        zIndex={1000}
+                    />
+                )}
 
                 {/* Render Info Window */}
                 {selectedMarker && selectedMarker.type === 'station' && (
