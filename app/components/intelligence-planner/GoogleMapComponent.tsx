@@ -37,6 +37,7 @@ interface GoogleMapComponentProps {
     poiFilterState: POIFilterState;
     onPOIFilterChange: (filterState: POIFilterState) => void;
     onSearchLocationSelect: (location: { lat: number; lng: number; address: string }) => void;
+    onPOICountChange?: (count: number) => void;
 }
 
 // @ts-ignore - maps3d removed
@@ -61,6 +62,7 @@ export default function GoogleMapComponent({
     poiFilterState,
     onPOIFilterChange,
     onSearchLocationSelect,
+    onPOICountChange,
 }: GoogleMapComponentProps) {
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [is3DMode, setIs3DMode] = useState(false);
@@ -156,9 +158,11 @@ export default function GoogleMapComponent({
                 );
 
                 setPois(results);
+                onPOICountChange?.(results.length);
             } catch (error) {
                 console.error('Error fetching POIs:', error);
                 setPois([]);
+                onPOICountChange?.(0);
             } finally {
                 setIsLoadingPOIs(false);
             }

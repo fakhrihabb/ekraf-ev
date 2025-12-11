@@ -54,6 +54,9 @@ export default function IntelligencePlannerClient() {
     const [analysisResults, setAnalysisResults] = useState<any | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+    // POI count state
+    const [poiCount, setPoiCount] = useState(0);
+
     // Map container ref for screenshot
     const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -228,7 +231,7 @@ export default function IntelligencePlannerClient() {
                 onToggleAddMode={() => setIsAddingCandidate(!isAddingCandidate)}
                 poiFilterState={poiFilterState}
                 onPOIFilterChange={handlePOIFilterChange}
-                poiCount={0} // Will be updated when POIs are loaded
+                poiCount={poiCount}
                 candidates={candidates}
                 onCandidateClick={handleCandidateNavigate}
                 onCandidateRemove={handleDeleteCandidate}
@@ -251,6 +254,7 @@ export default function IntelligencePlannerClient() {
                     poiFilterState={poiFilterState}
                     onPOIFilterChange={handlePOIFilterChange}
                     onSearchLocationSelect={handleSearchLocationSelect}
+                    onPOICountChange={setPoiCount}
                 />
                 {loading && (
                     <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-lg shadow-md">

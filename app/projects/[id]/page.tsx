@@ -21,13 +21,13 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
-  
+
   // Initialize tab from URL or default to 'list'
   const activeTab = (searchParams.get('tab') || 'list') as 'list' | 'comparison' | 'history';
 
   const setActiveTab = (tab: 'list' | 'comparison' | 'history') => {
-      // Update URL without refreshing
-      router.push(`/projects/${id}?tab=${tab}`, { scroll: false });
+    // Update URL without refreshing
+    router.push(`/projects/${id}?tab=${tab}`, { scroll: false });
   };
 
   useEffect(() => {
@@ -52,23 +52,27 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   };
 
   const handleDeleteProject = async () => {
-     try {
-       await SupabaseService.deleteProject(id);
-       router.push("/projects");
-     } catch (err) {
-       alert("Gagal menghapus proyek.");
-     }
+    try {
+      await SupabaseService.deleteProject(id);
+      router.push("/projects");
+    } catch (err) {
+      alert("Gagal menghapus proyek.");
+    }
   };
 
   const handleUpdateProject = async (updates: Partial<Project>) => {
-    // Stub
-    console.log("Update", updates);
+    try {
+      await SupabaseService.updateProject(id, updates);
+      fetchProject(); // Refresh to show updated data
+    } catch (err) {
+      alert("Gagal mengupdate proyek.");
+    }
   };
 
   const handleAddLocation = async (locationData: Partial<Location>) => {
     // locationData now comes from the modal (name, address, lat, lng)
     // Suitability score is undefined, so backend will generate mock analysis
-    
+
     try {
       await SupabaseService.addLocation(id, locationData);
       fetchProject(); // Refresh
@@ -96,19 +100,19 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
   const handleUpdateLocation = async (locationId: string, updates: Partial<Location>) => {
     try {
-        await SupabaseService.updateLocation(locationId, updates);
-        // Optimistic update
-        if (project) {
-            setProject({
-                ...project,
-                locations: project.locations.map(l => 
-                    l.id === locationId ? { ...l, ...updates } : l
-                )
-            });
-        }
+      await SupabaseService.updateLocation(locationId, updates);
+      // Optimistic update
+      if (project) {
+        setProject({
+          ...project,
+          locations: project.locations.map(l =>
+            l.id === locationId ? { ...l, ...updates } : l
+          )
+        });
+      }
     } catch (err) {
-        alert("Gagal memperbarui lokasi.");
-        fetchProject();
+      alert("Gagal memperbarui lokasi.");
+      fetchProject();
     }
   };
 
@@ -130,91 +134,91 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
       </div>
     );
   }
-  
+
   return (
     <main className="min-h-screen bg-slate-50 relative overflow-hidden pb-12">
-        {/* Background Shapes */}
-        <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full bg-brand-light/10 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-brand-primary/5 blur-3xl pointer-events-none" />
+      {/* Background Shapes */}
+      <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full bg-brand-light/10 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-brand-primary/5 blur-3xl pointer-events-none" />
 
       <div className="container mx-auto px-4 py-8 relative z-10">
-        
-        <ProjectHeader 
-          project={project} 
-          onDelete={handleDeleteProject} 
-          onUpdate={handleUpdateProject} 
+
+        <ProjectHeader
+          project={project}
+          onDelete={handleDeleteProject}
+          onUpdate={handleUpdateProject}
         />
 
         <SummaryStats project={project} />
 
         {/* Tabs */}
         <div className="flex gap-4 mb-6">
-            <button
-              onClick={() => setActiveTab('list')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${activeTab === 'list' ? 'bg-brand-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
-            >
-               Daftar Detail
-            </button>
-            <button
-              onClick={() => setActiveTab('comparison')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${activeTab === 'comparison' ? 'bg-brand-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
-            >
-               Perbandingan & Analisis
-            </button>
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all ${activeTab === 'history' ? 'bg-brand-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
-            >
-               Riwayat Aktivitas
-            </button>
+          <button
+            onClick={() => setActiveTab('list')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all ${activeTab === 'list' ? 'bg-brand-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+          >
+            Daftar Detail
+          </button>
+          <button
+            onClick={() => setActiveTab('comparison')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all ${activeTab === 'comparison' ? 'bg-brand-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+          >
+            Perbandingan & Analisis
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all ${activeTab === 'history' ? 'bg-brand-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+          >
+            Riwayat Aktivitas
+          </button>
         </div>
 
         {activeTab === 'list' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-in fade-in slide-in-from-bottom-4 duration-500">
-               {/* Map View - Takes 7 cols on large screens */}
-               <div className="lg:col-span-7 h-[600px] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-4">
-                  <ProjectMap 
-                    locations={project.locations} 
-                    selectedLocationId={selectedLocationId}
-                    onLocationSelect={setSelectedLocationId}
-                  />
-               </div>
-
-               {/* List View - Takes 5 cols */}
-               <div className="lg:col-span-5 space-y-4">
-                 <div className="glass-panel p-6 rounded-2xl border border-brand-primary/10">
-                    <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                        <LocationList 
-                          locations={project.locations} 
-                          onAddLocation={handleAddLocation}
-                          onRemoveLocation={handleRemoveLocation}
-                          selectedLocationId={selectedLocationId}
-                          onSelectLocation={setSelectedLocationId}
-                        />
-                    </div>
-                 </div>
-               </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Map View - Takes 7 cols on large screens */}
+            <div className="lg:col-span-7 h-[600px] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-4">
+              <ProjectMap
+                locations={project.locations}
+                selectedLocationId={selectedLocationId}
+                onLocationSelect={setSelectedLocationId}
+              />
             </div>
+
+            {/* List View - Takes 5 cols */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="glass-panel p-6 rounded-2xl border border-brand-primary/10">
+                <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                  <LocationList
+                    locations={project.locations}
+                    onAddLocation={handleAddLocation}
+                    onRemoveLocation={handleRemoveLocation}
+                    selectedLocationId={selectedLocationId}
+                    onSelectLocation={setSelectedLocationId}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {activeTab === 'comparison' && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-               <ComparisonCharts locations={project.locations} />
-               
-               <div className="glass-panel p-6 rounded-2xl border border-brand-primary/10">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">Tabel Perbandingan Detail</h3>
-                  <ComparisonTable 
-                    locations={project.locations} 
-                    onUpdateLocation={handleUpdateLocation}
-                  />
-               </div>
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <ComparisonCharts locations={project.locations} />
+
+            <div className="glass-panel p-6 rounded-2xl border border-brand-primary/10">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Tabel Perbandingan Detail</h3>
+              <ComparisonTable
+                locations={project.locations}
+                onUpdateLocation={handleUpdateLocation}
+              />
             </div>
+          </div>
         )}
 
         {activeTab === 'history' && (
-            <div className="h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500">
-               <HistoryTimeline projectId={project.id} />
-            </div>
+          <div className="h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <HistoryTimeline projectId={project.id} />
+          </div>
         )}
 
         {/* Floating Notes Widget */}
