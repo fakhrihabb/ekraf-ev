@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@googlemaps/google-maps-services-js": "^3.4.2",
     "@googlemaps/js-api-loader": "^2.0.2",
     "@react-google-maps/api": "^2.20.7",
