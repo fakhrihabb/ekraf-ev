@@ -341,9 +341,13 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
         let currentY = (doc as any).lastAutoTable.finalY || locY + 60;
 
         // --- SOLAR ANALYSIS SECTION ---
-        if (loc.analysis?.solar_score && loc.analysis?.solar_analysis_json) {
+        // Debug logging
+        console.log(`Location ${index + 1} - Solar Score:`, loc.analysis?.solar_score);
+        console.log(`Location ${index + 1} - Solar Data:`, loc.analysis?.solar_analysis_json);
+
+        if (loc.analysis?.solar_score || loc.analysis?.solar_analysis_json) {
           currentY += 15;
-          const solarData = loc.analysis.solar_analysis_json;
+          const solarData = loc.analysis.solar_analysis_json || {};
 
           // Section header
           doc.setFillColor(...BRAND.lightBlue);
@@ -358,18 +362,26 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
           doc.setFontSize(10);
           doc.setTextColor(...BRAND.gray700);
           doc.setFont("helvetica", "normal");
-          doc.text(`Skor Solar: ${loc.analysis.solar_score}/100`, MARGIN.left, currentY);
+          doc.text(`Skor Solar: ${loc.analysis?.solar_score || 'N/A'}/100`, MARGIN.left, currentY);
 
           currentY += 10;
 
-          // Solar ROI table
+          // Solar ROI table - extract from nested structure
+          const panelConfig = solarData.panel_config || {};
+          const roiAnalysis = solarData.roi_analysis || {};
+
+          // Calculate panel capacity from area and efficiency
+          const panelCapacityKw = panelConfig.area_m2 && panelConfig.efficiency
+            ? (panelConfig.area_m2 * panelConfig.efficiency).toFixed(1)
+            : null;
+
           const solarTableData = [
             ["Metrik", "Nilai"],
-            ["Kapasitas Panel", `${solarData.panel_capacity_kw || '-'} kW`],
-            ["Produksi Tahunan", `${solarData.annual_production_kwh ? solarData.annual_production_kwh.toLocaleString('id-ID') : '-'} kWh`],
-            ["Payback Period", `${solarData.payback_period_years || '-'} tahun`],
-            ["ROI 25 Tahun", solarData.roi_25_year ? `Rp ${(solarData.roi_25_year / 1000000).toFixed(1)}M` : '-'],
-            ["Penghematan/Tahun", solarData.annual_savings ? `Rp ${(solarData.annual_savings / 1000000).toFixed(1)}M` : '-'],
+            ["Kapasitas Panel", panelCapacityKw ? `${panelCapacityKw} kW` : '-'],
+            ["Produksi Tahunan", panelConfig.annual_production_kwh ? `${panelConfig.annual_production_kwh.toLocaleString('id-ID')} kWh` : '-'],
+            ["Payback Period", roiAnalysis.payback_period_years ? `${roiAnalysis.payback_period_years.toFixed(1)} tahun` : '-'],
+            ["ROI 25 Tahun", roiAnalysis.roi_25_years_percent ? `${roiAnalysis.roi_25_years_percent.toFixed(1)}%` : '-'],
+            ["Penghematan/Tahun", roiAnalysis.annual_savings_idr ? `Rp ${(roiAnalysis.annual_savings_idr / 1000000).toFixed(1)}M` : '-'],
           ];
 
           autoTable(doc, {
@@ -397,10 +409,11 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
           currentY = (doc as any).lastAutoTable.finalY + 8;
 
           // Monthly production note
-          if (solarData.monthly_production && Array.isArray(solarData.monthly_production)) {
+          const monthlyProduction = solarData.monthly_production_kwh || solarData.monthly_production;
+          if (monthlyProduction && Array.isArray(monthlyProduction)) {
             doc.setFontSize(9);
             doc.setTextColor(...BRAND.gray500);
-            doc.text(`Produksi bulanan bervariasi: ${Math.min(...solarData.monthly_production).toFixed(0)} - ${Math.max(...solarData.monthly_production).toFixed(0)} kWh/bulan`, MARGIN.left, currentY);
+            doc.text(`Produksi bulanan bervariasi: ${Math.min(...monthlyProduction).toFixed(0)} - ${Math.max(...monthlyProduction).toFixed(0)} kWh/bulan`, MARGIN.left, currentY);
             currentY += 6;
           }
         }

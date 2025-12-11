@@ -72,13 +72,29 @@ export async function POST(request: Request) {
       financial_data_json: analysis.recommendation?.financial_estimates || analysis.financial_data_json || null
     };
 
+    // Add solar fields if present
+    if (analysis.solarScore !== null && analysis.solarScore !== undefined) {
+      analysisData.solar_score = Math.round(analysis.solarScore);
+    }
+
+    if (analysis.solarAnalysis && Object.keys(analysis.solarAnalysis).length > 0) {
+      analysisData.solar_analysis_json = analysis.solarAnalysis;
+    }
+
+    console.log('📊 Saving analysis with solar data:', {
+      solar_score: analysisData.solar_score,
+      has_solar_json: !!analysisData.solar_analysis_json
+    });
+
     const { error: analysisError } = await supabase
       .from('analyses')
       .insert([analysisData]);
 
     if (analysisError) {
-      console.error("Error creating analysis:", analysisError);
+      console.error("❌ Error creating analysis:", analysisError);
       // Non-fatal, but worth logging
+    } else {
+      console.log("✅ Analysis saved successfully with solar data");
     }
 
     // 4. Log Actvity (History)

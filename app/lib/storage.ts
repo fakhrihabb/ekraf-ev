@@ -106,7 +106,21 @@ export const SupabaseService = {
         *,
         locations (
           *,
-          analyses (*)
+          analyses (
+            id,
+            location_id,
+            demand_score,
+            grid_score,
+            accessibility_score,
+            competition_score,
+            overall_score,
+            solar_score,
+            insights_text,
+            recommendation,
+            financial_data_json,
+            solar_analysis_json,
+            created_at
+          )
         )
       `)
       .eq('id', id)
@@ -123,6 +137,13 @@ export const SupabaseService = {
     const locations = (data.locations || []).map((loc: any) => {
       // Get the latest analysis if exists (assuming one per location for now or take the first)
       const analysis = loc.analyses && loc.analyses.length > 0 ? loc.analyses[0] : undefined;
+
+      // Debug log for solar data
+      if (analysis) {
+        console.log(`Location ${loc.id} - Solar Score:`, analysis.solar_score);
+        console.log(`Location ${loc.id} - Solar Analysis JSON:`, analysis.solar_analysis_json);
+      }
+
       return {
         ...loc,
         analysis,

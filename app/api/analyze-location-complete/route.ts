@@ -122,36 +122,54 @@ export async function POST(request: NextRequest) {
         let analysisId: string | undefined;
         if (saveToDb) {
             try {
+                console.log('=== SAVING TO DATABASE ===');
+                console.log('Solar Score (before save):', solarScore, 'Type:', typeof solarScore);
+                console.log('Solar Analysis JSON (before save):', solarAnalysisJson ? 'EXISTS' : 'NULL');
+
+                const analysisData: any = {
+                    location_id: locationId || null,
+                    demand_score: scores.demand,
+                    grid_score: scores.grid,
+                    accessibility_score: scores.accessibility,
+                    competition_score: scores.competition,
+                    overall_score: scores.overall,
+                    insights_text: insights,
+                    recommendation: recommendation.type,
+                    financial_data_json: {
+                        technical_specs: recommendation.technical_specs,
+                        financial_estimates: recommendation.financial_estimates,
+                        rationale: recommendation.rationale,
+                    },
+                };
+
+                // Only add solar fields if they have valid data
+                if (solarScore !== null && solarScore !== undefined) {
+                    analysisData.solar_score = Math.round(solarScore); // Ensure integer
+                }
+
+                if (solarAnalysisJson && Object.keys(solarAnalysisJson).length > 0) {
+                    analysisData.solar_analysis_json = solarAnalysisJson;
+                }
+
+                console.log('Analysis data to insert:', JSON.stringify(analysisData, null, 2));
+
                 const { data, error } = await supabase
                     .from('analyses')
-                    .insert({
-                        location_id: locationId || null,
-                        demand_score: scores.demand,
-                        grid_score: scores.grid,
-                        accessibility_score: scores.accessibility,
-                        competition_score: scores.competition,
-                        overall_score: scores.overall,
-                        solar_score: solarScore,
-                        insights_text: insights,
-                        recommendation: recommendation.type,
-                        financial_data_json: {
-                            technical_specs: recommendation.technical_specs,
-                            financial_estimates: recommendation.financial_estimates,
-                            rationale: recommendation.rationale,
-                        },
-                        solar_analysis_json: solarAnalysisJson,
-                    })
-                    .select('id')
+                    .insert(analysisData)
+                    .select('id, solar_score, solar_analysis_json')
                     .single();
 
                 if (error) {
-                    console.error('Error saving analysis to database:', error);
-                } else {
-                    analysisId = data?.id;
+                    console.error('❌ Error saving analysis to database:', error);
+                    console.error('Error details:', JSON.stringify(error, null, 2));
+                } else if (data) {
+                    analysisId = data.id;
+                    console.log('✅ Analysis saved with ID:', analysisId);
+                    console.log('✅ Confirmed solar_score in DB:', data.solar_score);
+                    console.log('✅ Confirmed solar_analysis_json in DB:', data.solar_analysis_json ? 'EXISTS' : 'NULL');
                 }
             } catch (dbError) {
-                console.error('Database error:', dbError);
-                // Continue even if save fails
+                console.error('❌ Database error:', dbError);
             }
         }
 
