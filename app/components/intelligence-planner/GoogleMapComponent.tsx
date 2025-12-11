@@ -25,7 +25,7 @@ interface GoogleMapComponentProps {
     onInfoWindowClose: () => void;
     onDeleteCandidate: (id: string) => void;
     onAnalyze: () => void;
-    mapContainerRef: React.RefObject<HTMLDivElement>;
+    mapContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const libraries: LoadScriptProps['libraries'] = ['places'];

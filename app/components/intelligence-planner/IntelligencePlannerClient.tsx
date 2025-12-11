@@ -34,7 +34,7 @@ export default function IntelligencePlannerClient() {
     const [selectedMarker, setSelectedMarker] = useState<SelectedMarker | null>(null);
 
     // Map container ref for screenshot
-    const mapContainerRef = useRef<HTMLDivElement>(null);
+    const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
     // Fetch stations from API on mount
     useEffect(() => {

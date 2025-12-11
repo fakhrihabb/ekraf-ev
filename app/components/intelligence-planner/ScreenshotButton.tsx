@@ -5,7 +5,7 @@ import { useState } from 'react';
 import html2canvas from 'html2canvas';
 
 interface ScreenshotButtonProps {
-    mapContainerRef: React.RefObject<HTMLDivElement>;
+    mapContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export default function ScreenshotButton({ mapContainerRef }: ScreenshotButtonProps) {
