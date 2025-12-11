@@ -1,102 +1,205 @@
 /**
  * Scoring Algorithms for Location Analysis
- * Developer 2: Analysis Engine & AI Lead
+ * Developer 2: Day 2 Implementation
  * 
- * This file contains utility functions and stubs for calculating
- * location suitability scores. Full implementation will be in Day 2.
+ * Full implementation with Google APIs and PostGIS
  */
 
 import { AnalysisScores, Recommendation, TechnicalSpecs, FinancialData, InfrastructureType } from '@/lib/supabase/types';
+import { fetchNearbyPOIs, calculateDemandScoreFromPOIs, checkParkingAvailability } from '@/lib/google/places';
+import { calculateHighwayDistance, calculateAccessibilityScoreFromData } from '@/lib/google/distance-matrix';
+import { findNearestSubstation, calculateGridScore as calcGridScore } from '@/lib/scoring/grid-data';
+import { supabase } from '@/app/lib/supabase';
+import { apiCache } from '@/lib/cache';
 
 // ============================================================================
-// Scoring Functions (Stubs for Day 1, to be implemented in Day 2)
+// Scoring Functions (Day 2 - Full Implementation)
 // ============================================================================
 
 /**
  * Calculate Demand Score (0-100)
- * 
- * Based on nearby POIs using Google Places API:
- * - High-traffic POIs (malls, universities, transit): +20 points each
- * - Medium-traffic (restaurants, offices): +10 points each
- * - Considers 2km radius
- * 
- * @param latitude - Location latitude
- * @param longitude - Location longitude
- * @returns Score from 0-100
+ * Uses Google Places API to count nearby POIs
  */
 export async function calculateDemandScore(
     latitude: number,
     longitude: number
 ): Promise<number> {
-    // TODO: Implement in Day 2 with Google Places API
-    // Mock implementation for now
-    return Math.floor(Math.random() * 40) + 60; // 60-100 for demo
+    // Check cache first
+    const cacheKey = `demand:${latitude}:${longitude}`;
+    const cached = apiCache.get<number>(cacheKey);
+    if (cached !== null) return cached;
+
+    try {
+        const pois = await fetchNearbyPOIs(latitude, longitude, 2000);
+        const score = calculateDemandScoreFromPOIs(pois);
+
+        // Cache the result
+        apiCache.set(cacheKey, score);
+        return score;
+    } catch (error) {
+        console.error('Error calculating demand score:', error);
+        // Fallback to moderate score
+        return 60;
+    }
 }
 
 /**
  * Calculate Grid Readiness Score (0-100)
- * 
- * Based on distance to nearest substation and available capacity:
- * - <1km = 90-100
- * - <3km = 70-90
- * - <5km = 50-70
- * - >5km = <50
- * 
- * @param latitude - Location latitude
- * @param longitude - Location longitude
- * @returns Score from 0-100
+ * Uses mock grid data and distance calculation
  */
 export async function calculateGridScore(
     latitude: number,
     longitude: number
 ): Promise<number> {
-    // TODO: Implement in Day 2 with PostGIS spatial queries
-    // Mock implementation for now
-    return Math.floor(Math.random() * 40) + 50; // 50-90 for demo
+    try {
+        const nearest = findNearestSubstation(latitude, longitude);
+
+        if (!nearest) {
+            return 40; // Default if no substations found
+        }
+
+        const score = calcGridScore(nearest.distance, nearest.substation.availableCapacity);
+        return score;
+    } catch (error) {
+        console.error('Error calculating grid score:', error);
+        return 50;
+    }
 }
 
 /**
  * Calculate Accessibility Score (0-100)
- * 
- * Based on:
- * - Travel time from nearby major roads/highways
- * - Parking facilities within 200m
- * - <5min from highway + parking = 90-100
- * - <10min + parking = 70-90
- * 
- * @param latitude - Location latitude
- * @param longitude - Location longitude
- * @returns Score from 0-100
+ * Uses Google Distance Matrix API and Places API for parking
  */
 export async function calculateAccessibilityScore(
     latitude: number,
     longitude: number
 ): Promise<number> {
-    // TODO: Implement in Day 2 with Google Distance Matrix API
-    // Mock implementation for now
-    return Math.floor(Math.random() * 40) + 60; // 60-100 for demo
+    // Check cache first
+    const cacheKey = `accessibility:${latitude}:${longitude}`;
+    const cached = apiCache.get<number>(cacheKey);
+    if (cached !== null) return cached;
+
+    try {
+        const highwayData = await calculateHighwayDistance(latitude, longitude);
+        const hasParking = await checkParkingAvailability(latitude, longitude);
+
+        const score = calculateAccessibilityScoreFromData(
+            highwayData.travelTimeMinutes,
+            hasParking
+        );
+
+        // Cache the result
+        apiCache.set(cacheKey, score);
+        return score;
+    } catch (error) {
+        console.error('Error calculating accessibility score:', error);
+        return 60;
+    }
 }
 
 /**
  * Calculate Competition Score (0-100)
- * 
- * Based on existing SPKLU/SPBKLU stations within 5km:
- * - 0 stations = 100
- * - 1 station = 80
- * - 2 stations = 60
- * - 3+ stations = 40 or less
- * 
- * @param latitude - Location latitude
- * @param longitude - Location longitude
- * @returns Score from 0-100
+ * Uses PostGIS spatial queries on existing_stations table
  */
 export async function calculateCompetitionScore(
     latitude: number,
     longitude: number
 ): Promise<number> {
-    // TODO: Implement in Day 2 with PostGIS spatial queries on existing_stations
-    // Mock implementation for now
-    return Math.floor(Math.random() * 50) + 40; // 40-90 for demo
+    try {
+        // Query stations within 5km using PostGIS
+        const { data: nearbyStations, error } = await supabase
+            .rpc('get_stations_within_radius', {
+                target_lat: latitude,
+                target_lng: longitude,
+                radius_meters: 5000,
+            })
+            .throwOnError();
+
+        if (error) {
+            console.error('Error querying nearby stations:', error);
+            // Fallback: query all stations and filter manually
+            const { data: allStations } = await supabase
+                .from('existing_stations')
+                .select('latitude, longitude');
+
+            if (allStations) {
+                const nearby = allStations.filter(station => {
+                    const distance = calculateSimpleDistance(
+                        latitude,
+                        longitude,
+                        station.latitude,
+                        station.longitude
+                    );
+                    return distance <= 5000;
+                });
+
+                return calculateCompetitionScoreFromStations(nearby.length, nearby);
+            }
+
+            return 70; // Default moderate competition
+        }
+
+        return calculateCompetitionScoreFromStations(
+            nearbyStations?.length || 0,
+            nearbyStations || []
+        );
+    } catch (error) {
+        console.error('Error calculating competition score:', error);
+        return 70;
+    }
+}
+
+/**
+ * Helper: Calculate competition score from stations count
+ */
+function calculateCompetitionScoreFromStations(
+    count: number,
+    stations: Array<{ latitude: number; longitude: number }>
+): number {
+    let score = 100;
+
+    // Base penalty by count
+    if (count === 0) {
+        return 100;
+    } else if (count === 1) {
+        score = 80;
+    } else if (count === 2) {
+        score = 60;
+    } else if (count === 3) {
+        score = 45;
+    } else {
+        score = 30;
+    }
+
+    // Additional penalty for very close stations (simplified)
+    // In production, would weight by actual distance
+    const veryCloseCount = Math.min(count, 5);
+    score -= veryCloseCount * 5;
+
+    return Math.max(20, score); // Minimum score 20
+}
+
+/**
+ * Helper: Simple distance calculation
+ */
+function calculateSimpleDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+): number {
+    const R = 6371e3; // Earth radius in meters
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+        Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
 }
 
 /**
@@ -107,9 +210,6 @@ export async function calculateCompetitionScore(
  * - Grid: 25%
  * - Accessibility: 25%
  * - Competition: 20%
- * 
- * @param scores - Individual scores
- * @returns Overall score from 0-100
  */
 export function calculateOverallScore(scores: {
     demand: number;
@@ -128,19 +228,18 @@ export function calculateOverallScore(scores: {
 
 /**
  * Calculate all scores for a location
- * 
- * @param latitude - Location latitude
- * @param longitude - Location longitude
- * @returns Complete analysis scores
  */
 export async function calculateAllScores(
     latitude: number,
     longitude: number
 ): Promise<AnalysisScores> {
-    const demand = await calculateDemandScore(latitude, longitude);
-    const grid = await calculateGridScore(latitude, longitude);
-    const accessibility = await calculateAccessibilityScore(latitude, longitude);
-    const competition = await calculateCompetitionScore(latitude, longitude);
+    const [demand, grid, accessibility, competition] = await Promise.all([
+        calculateDemandScore(latitude, longitude),
+        calculateGridScore(latitude, longitude),
+        calculateAccessibilityScore(latitude, longitude),
+        calculateCompetitionScore(latitude, longitude),
+    ]);
+
     const overall = calculateOverallScore({ demand, grid, accessibility, competition });
 
     return {
