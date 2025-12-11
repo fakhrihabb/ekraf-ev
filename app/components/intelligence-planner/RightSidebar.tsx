@@ -26,29 +26,27 @@ export default function RightSidebar({ isOpen, onToggle, analysisResults, isAnal
             className={`relative h-full bg-white border-l border-gray-200 transition-all duration-300 ${isOpen ? 'w-96' : 'w-12'
                 }`}
         >
-            {/* Toggle Button */}
-            <button
-                onClick={onToggle}
-                className="absolute -left-4 top-4 z-10 w-10 h-10 bg-white border-2 border-[var(--color-light-blue)] rounded-lg flex items-center justify-center hover:bg-[var(--color-light-blue)] hover:text-white transition-all shadow-md hover:shadow-lg group"
-                aria-label={isOpen ? 'Tutup panel hasil' : 'Buka panel hasil'}
-            >
-                {isOpen ? (
-                    <ChevronRight className="w-5 h-5 text-[var(--color-light-blue)] group-hover:text-white" />
-                ) : (
-                    <ChevronLeft className="w-5 h-5 text-[var(--color-light-blue)] group-hover:text-white" />
-                )}
-            </button>
-
             {/* Sidebar Content */}
             <div className={`h-full overflow-hidden ${isOpen ? 'p-4' : 'p-2'}`}>
                 {isOpen ? (
                     <div className="space-y-4 h-full flex flex-col">
                         <div className="flex-1 overflow-y-auto space-y-4 pb-4">
-                            <div>
-                                <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                            {/* Header with Toggle Button */}
+                            <div className="relative mb-2">
+                                <button
+                                    onClick={onToggle}
+                                    className="absolute left-0 top-0 w-8 h-8 border-2 border-[var(--color-light-blue)] rounded-lg flex items-center justify-center hover:bg-[var(--color-light-blue)] hover:text-white transition-all group"
+                                    aria-label="Tutup panel hasil"
+                                >
+                                    <ChevronRight className="w-4 h-4 text-[var(--color-light-blue)] group-hover:text-white" />
+                                </button>
+                                <h2 className="text-lg font-semibold text-gray-800 text-center">
                                     Hasil Analisis
                                 </h2>
-                                <p className="text-sm text-gray-600">
+                            </div>
+
+                            <div>
+                                <p className="text-sm text-gray-600 text-center">
                                     {analysisResults ? 'Hasil analisis lokasi telah selesai.' : 'Hasil analisis lokasi akan ditampilkan di sini.'}
                                 </p>
                             </div>
@@ -165,7 +163,14 @@ export default function RightSidebar({ isOpen, onToggle, analysisResults, isAnal
                         )}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center gap-4 pt-12">
+                    <div className="flex flex-col items-center gap-4 pt-4">
+                        <button
+                            onClick={onToggle}
+                            className="w-8 h-8 border-2 border-[var(--color-light-blue)] rounded-lg flex items-center justify-center hover:bg-[var(--color-light-blue)] hover:text-white transition-all group"
+                            aria-label="Buka panel hasil"
+                        >
+                            <ChevronLeft className="w-4 h-4 text-[var(--color-light-blue)] group-hover:text-white" />
+                        </button>
                         <div className="w-8 h-8 rounded-lg bg-[var(--color-light-blue)]/10 flex items-center justify-center">
                             <BarChart3 className="w-5 h-5 text-[var(--color-light-blue)]" />
                         </div>
