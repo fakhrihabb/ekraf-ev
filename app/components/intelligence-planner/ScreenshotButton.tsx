@@ -2,7 +2,7 @@
 
 import { Camera, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import html2canvas from 'html2canvas';
+
 
 interface ScreenshotButtonProps {
     mapContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -12,22 +12,43 @@ export default function ScreenshotButton({ mapContainerRef }: ScreenshotButtonPr
     const [isCapturing, setIsCapturing] = useState(false);
 
     const handleScreenshot = async () => {
-        if (!mapContainerRef.current) return;
-
         try {
             setIsCapturing(true);
 
-            // Wait a bit for any animations to complete
-            await new Promise((resolve) => setTimeout(resolve, 300));
-
-            const canvas = await html2canvas(mapContainerRef.current, {
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: null,
-                scale: 2, // Higher quality
+            // 1. Request screen capture
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    displaySurface: 'browser',
+                },
+                audio: false,
             });
 
-            // Convert to blob and download
+            // 2. Create a video element to play the stream
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.muted = true;
+            video.playsInline = true;
+
+            await video.play();
+
+            // 3. Create canvas and draw the video frame
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+
+            if (!ctx) {
+                throw new Error('Could not get canvas context');
+            }
+
+            // Draw the current video frame to canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // 4. Stop the stream (stop sharing)
+            stream.getTracks().forEach((track) => track.stop());
+            video.remove();
+
+            // 5. Convert to blob and download
             canvas.toBlob((blob) => {
                 if (!blob) return;
                 const url = URL.createObjectURL(blob);
@@ -36,7 +57,7 @@ export default function ScreenshotButton({ mapContainerRef }: ScreenshotButtonPr
                 link.download = `sivana-map-${new Date().toISOString().slice(0, 10)}-${Date.now()}.png`;
                 link.click();
                 URL.revokeObjectURL(url);
-            });
+            }, 'image/png');
 
             setIsCapturing(false);
         } catch (error) {
@@ -55,7 +76,7 @@ export default function ScreenshotButton({ mapContainerRef }: ScreenshotButtonPr
             {isCapturing ? (
                 <>
                     <Loader2 className="w-5 h-5 text-[var(--color-light-blue)] animate-spin" />
-                    <span className="text-sm font-medium text-gray-700">Memproses...</span>
+                    <span className="text-sm font-medium text-gray-700">Merekam...</span>
                 </>
             ) : (
                 <>
