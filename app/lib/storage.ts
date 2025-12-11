@@ -1,4 +1,4 @@
-import { Project, Location } from './types';
+import { Project, Location, ProjectHistory, ProjectNote } from './types';
 import { supabase } from './supabase';
 
 const STORAGE_KEY = 'sivana_projects';
@@ -183,13 +183,25 @@ export const SupabaseService = {
     }
 
     // Return with mapped structure for UI
-    return {
+    const result = {
       ...locData,
       suitability_score: suitability_score
     };
+
+    // Log Activity
+    await ProjectHistoryService.logAction(projectId, 'ADD_LOCATION', `Menambahkan lokasi "${dbLocationData.name || 'Lokasi Baru'}"`);
+
+    return result;
   },
 
   removeLocation: async (locationId: string): Promise<void> => {
+    // Fetch location details first to get project_id and name for logging
+    const { data: locationData } = await supabase
+      .from('locations')
+      .select('project_id, name')
+      .eq('id', locationId)
+      .single();
+
     const { error } = await supabase
       .from('locations')
       .delete()
@@ -198,6 +210,11 @@ export const SupabaseService = {
     if (error) {
       console.error('Error removing location:', error);
       throw error;
+    }
+
+    // Log Activity if we found the location
+    if (locationData) {
+      await ProjectHistoryService.logAction(locationData.project_id, 'REMOVE_LOCATION', `Menghapus lokasi "${locationData.name}"`);
     }
   },
 
@@ -253,6 +270,9 @@ export const ProjectReportsService = {
       console.error('Error saving report metadata:', dbError);
       throw dbError;
     }
+
+    // Log Activity
+    await ProjectHistoryService.logAction(projectId, 'GENERATE_REPORT', `Membuat laporan "${fileName}"`);
   },
 
   getReports: async (projectId: string): Promise<any[]> => {
@@ -279,5 +299,66 @@ export const ProjectReportsService = {
       return null;
     }
     return data?.signedUrl || null;
+  }
+};
+
+export const ProjectHistoryService = {
+  fetchHistory: async (projectId: string): Promise<ProjectHistory[]> => {
+    const { data, error } = await supabase
+      .from('project_history')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching project history:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  logAction: async (projectId: string, actionType: string, description: string): Promise<void> => {
+    const { error } = await supabase
+      .from('project_history')
+      .insert([{
+        project_id: projectId,
+        action_type: actionType,
+        description: description
+      }]);
+
+    if (error) {
+      console.error('Error logging project history:', error);
+    }
+  },
+
+  fetchNotes: async (projectId: string): Promise<ProjectNote[]> => {
+    const { data, error } = await supabase
+      .from('project_notes')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching project notes:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  addNote: async (projectId: string, noteText: string): Promise<ProjectNote | null> => {
+    const { data, error } = await supabase
+      .from('project_notes')
+      .insert([{
+        project_id: projectId,
+        note_text: noteText
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding project note:', error);
+      return null;
+    }
+    return data;
   }
 };

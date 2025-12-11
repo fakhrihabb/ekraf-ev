@@ -9,6 +9,7 @@ import { SummaryStats } from "@/components/projects/details/SummaryStats";
 import { LocationList } from "@/components/projects/details/LocationList";
 import { ComparisonTable } from "@/components/projects/details/ComparisonTable";
 import { ComparisonCharts } from "@/components/projects/details/ComparisonCharts";
+import { HistoryTimeline } from "@/components/projects/details/HistoryTimeline";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -19,9 +20,9 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const [error, setError] = useState<string | null>(null);
   
   // Initialize tab from URL or default to 'list'
-  const activeTab = searchParams.get('tab') === 'comparison' ? 'comparison' : 'list';
+  const activeTab = (searchParams.get('tab') || 'list') as 'list' | 'comparison' | 'history';
 
-  const setActiveTab = (tab: 'list' | 'comparison') => {
+  const setActiveTab = (tab: 'list' | 'comparison' | 'history') => {
       // Update URL without refreshing
       router.push(`/projects/${id}?tab=${tab}`, { scroll: false });
   };
@@ -157,9 +158,15 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             >
                Perbandingan & Analisis
             </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all ${activeTab === 'history' ? 'bg-brand-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+            >
+               Aktivitas & Catatan
+            </button>
         </div>
 
-        {activeTab === 'list' ? (
+        {activeTab === 'list' && (
             <div className="glass-panel p-6 rounded-2xl border border-brand-primary/10">
                <LocationList 
                  locations={project.locations} 
@@ -167,7 +174,9 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                  onRemoveLocation={handleRemoveLocation}
                />
             </div>
-        ) : (
+        )}
+
+        {activeTab === 'comparison' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                <ComparisonCharts locations={project.locations} />
                
@@ -178,6 +187,12 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                     onUpdateLocation={handleUpdateLocation}
                   />
                </div>
+            </div>
+        )}
+
+        {activeTab === 'history' && (
+            <div className="h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500">
+               <HistoryTimeline projectId={project.id} />
             </div>
         )}
       </div>

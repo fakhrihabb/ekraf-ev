@@ -1,3 +1,4 @@
+
 export interface Analysis {
   id: string;
   location_id: string;
@@ -45,5 +46,20 @@ export interface ProjectReport {
   name: string;
   storage_path: string;
   size_bytes: number;
+  created_at: string;
+}
+
+export interface ProjectHistory {
+  id: string;
+  project_id: string;
+  action_type: string;
+  description: string;
+  created_at: string;
+}
+
+export interface ProjectNote {
+  id: string;
+  project_id: string;
+  note_text: string;
   created_at: string;
 }
