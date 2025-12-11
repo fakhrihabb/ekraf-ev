@@ -1,56 +1,41 @@
-/**
- * Get Existing Stations API Endpoint
- * Developer 2: Analysis Engine & AI Lead
- * 
- * GET /api/stations?bounds=swLat,swLng,neLat,neLng
- * 
- * Returns: List of existing SPKLU/SPBKLU stations in the given bounds
- */
-
-import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient } from '@/lib/supabase/client';
-import { StationsResponse } from '@/lib/supabase/types';
+import { supabase } from '@/app/lib/supabase';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
     try {
-        // Check if Supabase is configured
-        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-            return NextResponse.json(
-                { error: 'Supabase not configured. Please set up environment variables.' },
-                { status: 503 }
-            );
-        }
-
-        const searchParams = request.nextUrl.searchParams;
+        const { searchParams } = new URL(request.url);
         const bounds = searchParams.get('bounds');
 
-        const supabase = getSupabaseClient();
-
-        // If bounds provided, filter by bounds (to be implemented with PostGIS)
-        // For now, return all stations (will optimize in Day 2)
-        const { data: stations, error } = await supabase
+        let query = supabase
             .from('existing_stations')
             .select('*')
             .order('name');
 
-        if (error) {
-            console.error('Error fetching stations:', error);
-            return NextResponse.json(
-                { error: 'Failed to fetch stations' },
-                { status: 500 }
-            );
+        // Optional: Filter by bounds for performance
+        if (bounds) {
+            const [swLat, swLng, neLat, neLng] = bounds.split(',').map(Number);
+            query = query
+                .gte('latitude', swLat)
+                .lte('latitude', neLat)
+                .gte('longitude', swLng)
+                .lte('longitude', neLng);
         }
 
-        const response: StationsResponse = {
-            stations: stations || [],
-            total: stations?.length || 0,
-        };
+        const { data, error } = await query;
 
-        return NextResponse.json(response, { status: 200 });
+        if (error) {
+            console.error('Supabase error:', error);
+            return Response.json({ error: error.message }, { status: 500 });
+        }
+
+        return Response.json({
+            stations: data || [],
+            total: data?.length || 0,
+        });
     } catch (error) {
-        console.error('Error in stations API:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
+        console.error('API error:', error);
+        return Response.json(
+            { error: 'Failed to fetch stations' },
             { status: 500 }
         );
     }

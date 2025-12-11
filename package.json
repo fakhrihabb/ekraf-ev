@@ -10,9 +10,12 @@
   },
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.4.2",
+    "@googlemaps/js-api-loader": "^2.0.2",
     "@react-google-maps/api": "^2.20.7",
     "@supabase/supabase-js": "^2.87.1",
     "date-fns": "^4.1.0",
+    "framer-motion": "^12.23.26",
+    "internmap": "^2.0.3",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.559.0",
