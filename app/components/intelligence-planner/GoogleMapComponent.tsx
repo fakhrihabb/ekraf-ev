@@ -335,7 +335,7 @@ export default function GoogleMapComponent({
                 {searchResultMarker && (
                     <Marker
                         position={{ lat: searchResultMarker.lat, lng: searchResultMarker.lng }}
-                        icon={getMarkerIcon('candidate')}
+                        icon={getMarkerIcon('CANDIDATE')}
                         onClick={handleSearchMarkerClick}
                         zIndex={1000}
                     />
