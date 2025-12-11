@@ -21,8 +21,6 @@ export const ProjectMap = ({ locations, onLocationSelect, selectedLocationId }: 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     libraries,
-    version: 'beta', // Use beta to match IntelligencePlanner and avoid duplicate script loading
-    id: 'google-map-script' // Adding an ID helps prevent duplicates too
   });
 
   // Default center (Jakarta) if no locations
@@ -35,8 +33,8 @@ export const ProjectMap = ({ locations, onLocationSelect, selectedLocationId }: 
       let hasValidLoc = false;
       locations.forEach(loc => {
         if (loc.latitude && loc.longitude) {
-           bounds.extend({ lat: loc.latitude, lng: loc.longitude });
-           hasValidLoc = true;
+          bounds.extend({ lat: loc.latitude, lng: loc.longitude });
+          hasValidLoc = true;
         }
       });
       if (hasValidLoc) {
@@ -49,12 +47,12 @@ export const ProjectMap = ({ locations, onLocationSelect, selectedLocationId }: 
   // Pan to selected location
   useEffect(() => {
     if (mapRef.current && selectedLocationId) {
-        const selectedLoc = locations.find(l => l.id === selectedLocationId);
-        if (selectedLoc && selectedLoc.latitude && selectedLoc.longitude) {
-            mapRef.current.panTo({ lat: selectedLoc.latitude, lng: selectedLoc.longitude });
-            mapRef.current.setZoom(15);
-            setActiveMarker(selectedLocationId);
-        }
+      const selectedLoc = locations.find(l => l.id === selectedLocationId);
+      if (selectedLoc && selectedLoc.latitude && selectedLoc.longitude) {
+        mapRef.current.panTo({ lat: selectedLoc.latitude, lng: selectedLoc.longitude });
+        mapRef.current.setZoom(15);
+        setActiveMarker(selectedLocationId);
+      }
     }
   }, [selectedLocationId, locations]);
 
@@ -87,7 +85,7 @@ export const ProjectMap = ({ locations, onLocationSelect, selectedLocationId }: 
           <Marker
             key={loc.id}
             position={{ lat: loc.latitude, lng: loc.longitude }}
-            icon={getMarkerIcon('CANDIDATE')} 
+            icon={getMarkerIcon('CANDIDATE')}
             onClick={() => handleMarkerClick(loc)}
           />
         )
@@ -98,26 +96,26 @@ export const ProjectMap = ({ locations, onLocationSelect, selectedLocationId }: 
           const loc = locations.find(l => l.id === activeMarker);
           if (!loc || !loc.latitude || !loc.longitude) return null;
           return (
-             <InfoWindow
-               position={{ lat: loc.latitude, lng: loc.longitude }}
-               onCloseClick={() => {
-                   setActiveMarker(null);
-                   if (onLocationSelect) onLocationSelect(""); // Clear selection
-               }}
-               options={{
-                   pixelOffset: new google.maps.Size(0, -42) // Offset to match marker height
-               }}
-             >
-               <div className="p-2 min-w-[200px]">
-                 <h3 className="font-bold text-gray-900 mb-1">{loc.name}</h3>
-                 <p className="text-xs text-gray-600 mb-2">{loc.address}</p>
-                 <div className="flex gap-2">
-                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">
-                       Score: {loc.suitability_score || 'N/A'}
-                    </span>
-                 </div>
-               </div>
-             </InfoWindow>
+            <InfoWindow
+              position={{ lat: loc.latitude, lng: loc.longitude }}
+              onCloseClick={() => {
+                setActiveMarker(null);
+                if (onLocationSelect) onLocationSelect(""); // Clear selection
+              }}
+              options={{
+                pixelOffset: new google.maps.Size(0, -42) // Offset to match marker height
+              }}
+            >
+              <div className="p-2 min-w-[200px]">
+                <h3 className="font-bold text-gray-900 mb-1">{loc.name}</h3>
+                <p className="text-xs text-gray-600 mb-2">{loc.address}</p>
+                <div className="flex gap-2">
+                  <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">
+                    Score: {loc.suitability_score || 'N/A'}
+                  </span>
+                </div>
+              </div>
+            </InfoWindow>
           );
         })()
       )}
