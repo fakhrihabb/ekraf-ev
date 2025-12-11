@@ -4,11 +4,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Map, FolderKanban } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import SearchBar from './intelligence-planner/SearchBar';
 
-export default function Navbar() {
+interface NavbarProps {
+  onSearchLocationSelect?: (location: { lat: number; lng: number; address: string }) => void;
+}
+
+export default function Navbar({ onSearchLocationSelect }: NavbarProps = {}) {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const isLandingPage = pathname === '/';
+  const isIntelligencePlanner = pathname === '/intelligence-planner';
 
   const isActive = (path: string) => pathname === path;
 
@@ -46,11 +52,21 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="flex items-center gap-6">
+            {/* Search Bar - Only on Intelligence Planner */}
+            {isIntelligencePlanner && onSearchLocationSelect && (
+              <div className="w-96">
+                <SearchBar
+                  onLocationSelect={onSearchLocationSelect}
+                  placeholder="Cari alamat atau koordinat..."
+                />
+              </div>
+            )}
+
             <Link
               href="/intelligence-planner"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isActive('/intelligence-planner')
-                  ? 'bg-[var(--color-light-blue)] text-white'
-                  : `${textClasses} hover:bg-gray-100`
+                ? 'bg-[var(--color-light-blue)] text-white'
+                : `${textClasses} hover:bg-gray-100`
                 }`}
             >
               <Map className="w-4 h-4" />
@@ -59,8 +75,8 @@ export default function Navbar() {
             <Link
               href="/projects"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isActive('/projects')
-                  ? 'bg-[var(--color-light-blue)] text-white'
-                  : `${textClasses} hover:bg-gray-100`
+                ? 'bg-[var(--color-light-blue)] text-white'
+                : `${textClasses} hover:bg-gray-100`
                 }`}
             >
               <FolderKanban className="w-4 h-4" />

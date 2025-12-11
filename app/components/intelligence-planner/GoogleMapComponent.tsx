@@ -16,7 +16,6 @@ import { PlacesService } from '@/app/services/places-api';
 import StationInfoWindow from './StationInfoWindow';
 import CandidateInfoWindow from './CandidateInfoWindow';
 import POIInfoWindow from './POIInfoWindow';
-import SearchBar from './SearchBar';
 import LocationSelectionPanel from './LocationSelectionPanel';
 import View3DToggle from './View3DToggle';
 import ScreenshotButton from './ScreenshotButton';
@@ -105,6 +104,10 @@ export default function GoogleMapComponent({
             viewStateRef.current.center = { lat: location.lat, lng: location.lng };
             viewStateRef.current.zoom = 16;
         }
+
+        // Show location panel
+        setSelectedLocation({ lat: location.lat, lng: location.lng });
+        setShowLocationPanel(true);
 
         // Pass to parent for potential candidate addition
         onSearchLocationSelect(location);
@@ -269,9 +272,6 @@ export default function GoogleMapComponent({
 
     return (
         <>
-            {/* Search Bar */}
-            <SearchBar onLocationSelect={handleSearchSelect} />
-
             {/* 3D Toggle Button */}
             <View3DToggle is3DMode={is3DMode} onToggle={toggle3DMode} />
 
