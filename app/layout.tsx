@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SIVANA - Sistem Intelijen EV untuk Analitik Lokasi SPKLU dan SPBKLU",
   description: "Platform perencanaan berbasis AI untuk infrastruktur pengisian kendaraan listrik di Indonesia",
+  icons: {
+    icon: '/branding/logo.svg',
+  },
 };
 
 export default function RootLayout({
