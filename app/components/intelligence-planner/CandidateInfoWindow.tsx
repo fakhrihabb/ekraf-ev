@@ -59,8 +59,7 @@ export default function CandidateInfoWindow({
                     <button
                         onClick={onAnalyze}
                         className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-[var(--color-light-blue)] text-white rounded text-xs font-medium hover:opacity-90 transition-opacity"
-                        disabled
-                        title="Akan tersedia di Task 1.7"
+                        title="Analisis lokasi dengan AI"
                     >
                         <BarChart3 className="w-3 h-3" />
                         Analisis

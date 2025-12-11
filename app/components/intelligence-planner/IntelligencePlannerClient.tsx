@@ -97,10 +97,43 @@ export default function IntelligencePlannerClient() {
         setSelectedMarker(null);
     }, []);
 
-    // Handle analyze (placeholder for Task 1.7)
-    const handleAnalyze = useCallback(() => {
-        console.log('Analyze clicked - will be implemented in Task 1.7');
-    }, []);
+    // Handle analyze - call backend API
+    const handleAnalyze = useCallback(async () => {
+        if (!selectedMarker || selectedMarker.type !== 'candidate') return;
+
+        const candidate = selectedMarker.data as CandidateLocation;
+
+        try {
+            console.log('Analyzing location:', candidate.address);
+
+            const response = await fetch('/api/analyze-location-complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    latitude: candidate.latitude,
+                    longitude: candidate.longitude,
+                    address: candidate.address,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Analysis failed');
+            }
+
+            const analysisData = await response.json();
+            console.log('Analysis complete:', analysisData);
+
+            // TODO: Display analysis results in UI (will be done by Developer 1)
+            // For now, just log to console
+            alert(`Analisis selesai!\nSkor: ${analysisData.scores.overall}/100\nRekomendasi: ${analysisData.recommendation.type}`);
+
+        } catch (error) {
+            console.error('Error analyzing location:', error);
+            alert('Gagal menganalisis lokasi. Silakan coba lagi.');
+        }
+    }, [selectedMarker]);
 
     // Calculate station counts
     const stationCounts = {
