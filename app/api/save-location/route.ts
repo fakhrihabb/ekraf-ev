@@ -21,18 +21,18 @@ export async function POST(request: Request) {
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert([{
-            id: crypto.randomUUID(),
-            name: newProjectName,
-            description: "Created from Intelligence Planner"
+          id: crypto.randomUUID(),
+          name: newProjectName,
+          description: "Created from Intelligence Planner"
         }])
         .select()
         .single();
 
       if (projectError) {
         console.error("Error creating project:", projectError);
-        return NextResponse.json({ 
-          error: `Failed to create project: ${projectError.message}`, 
-          details: projectError 
+        return NextResponse.json({
+          error: `Failed to create project: ${projectError.message}`,
+          details: projectError
         }, { status: 500 });
       }
       targetProjectId = projectData.id;
@@ -57,18 +57,24 @@ export async function POST(request: Request) {
     }
 
     // 3. Add Analysis
+    // Handle both old format (overall_score) and new format (scores.overall)
+    const analysisData: any = {
+      location_id: locationData.id,
+      overall_score: analysis.scores?.overall || analysis.overall_score || 0,
+      demand_score: analysis.scores?.demand || analysis.demand_score || 0,
+      grid_score: analysis.scores?.grid || analysis.grid_score || 0,
+      accessibility_score: analysis.scores?.accessibility || analysis.accessibility_score || 0,
+      competition_score: analysis.scores?.competition || analysis.competition_score || 0,
+      insights_text: analysis.insights || analysis.insights_text || "",
+      recommendation: typeof analysis.recommendation === 'string'
+        ? analysis.recommendation
+        : JSON.stringify(analysis.recommendation || {}),
+      financial_data_json: analysis.recommendation?.financial_estimates || analysis.financial_data_json || null
+    };
+
     const { error: analysisError } = await supabase
       .from('analyses')
-      .insert([{
-        location_id: locationData.id,
-        overall_score: analysis.overall_score || 0,
-        demand_score: analysis.demand_score || 0,
-        grid_score: analysis.grid_score || 0,
-        accessibility_score: analysis.accessibility_score || 0,
-        competition_score: analysis.competition_score || 0,
-        insights_text: analysis.insights_text || "",
-        recommendation: analysis.recommendation || ""
-      }]);
+      .insert([analysisData]);
 
     if (analysisError) {
       console.error("Error creating analysis:", analysisError);
@@ -90,10 +96,10 @@ export async function POST(request: Request) {
       description: `Menambahkan lokasi "${locationName || "New Location"}"`
     }]);
 
-    return NextResponse.json({ 
-        success: true, 
-        projectId: targetProjectId, 
-        locationId: locationData.id 
+    return NextResponse.json({
+      success: true,
+      projectId: targetProjectId,
+      locationId: locationData.id
     });
 
   } catch (err) {
