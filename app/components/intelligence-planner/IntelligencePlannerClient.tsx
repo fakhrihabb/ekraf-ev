@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import GoogleMapComponent from './GoogleMapComponent';
 import LeftSidebar from './LeftSidebar';
 import RightSidebar from './RightSidebar';
@@ -32,6 +32,9 @@ export default function IntelligencePlannerClient() {
 
     // Selected marker for info window
     const [selectedMarker, setSelectedMarker] = useState<SelectedMarker | null>(null);
+
+    // Map container ref for screenshot
+    const mapContainerRef = useRef<HTMLDivElement>(null);
 
     // Fetch stations from API on mount
     useEffect(() => {
@@ -120,7 +123,7 @@ export default function IntelligencePlannerClient() {
             />
 
             {/* Map Container */}
-            <div className="flex-1 relative">
+            <div ref={mapContainerRef} className="flex-1 relative">
                 <GoogleMapComponent
                     stations={stations}
                     candidates={candidates}
@@ -131,6 +134,7 @@ export default function IntelligencePlannerClient() {
                     onInfoWindowClose={handleInfoWindowClose}
                     onDeleteCandidate={handleDeleteCandidate}
                     onAnalyze={handleAnalyze}
+                    mapContainerRef={mapContainerRef}
                 />
                 {loading && (
                     <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-lg shadow-md">
