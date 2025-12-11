@@ -1,6 +1,7 @@
 'use client';
 
-import { useLoadScript, GoogleMap, Marker, LoadScriptProps, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
+import { useGoogleMaps } from '@/app/components/GoogleMapsProvider';
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import {
     Station,
@@ -40,9 +41,6 @@ interface GoogleMapComponentProps {
     onPOICountChange?: (count: number) => void;
 }
 
-// @ts-ignore - maps3d removed
-const libraries: LoadScriptProps['libraries'] = ['places'];
-
 // Default center: DKI Jakarta
 const DEFAULT_CENTER = { lat: -6.2088, lng: 106.8456 };
 const DEFAULT_ZOOM = 15; // Zoomed in for 3D effect
@@ -78,10 +76,8 @@ export default function GoogleMapComponent({
         tilt: 0
     });
 
-    const { isLoaded, loadError } = useLoadScript({
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-        libraries,
-    });
+    // Use shared Google Maps loader from provider
+    const { isLoaded, loadError } = useGoogleMaps();
 
     // Toggle 3D mode logic
     const toggle3DMode = useCallback(() => {

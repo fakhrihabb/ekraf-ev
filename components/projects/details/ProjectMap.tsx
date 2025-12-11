@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useLoadScript, GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
+import { useGoogleMaps } from '@/app/components/GoogleMapsProvider';
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { Location } from '@/app/lib/types';
 import { getMarkerIcon } from '@/app/utils/markerIcons';
@@ -12,16 +13,14 @@ interface ProjectMapProps {
   selectedLocationId?: string | null;
 }
 
-const libraries: ("places" | "geometry" | "drawing" | "visualization")[] = ['places'];
-
 export const ProjectMap = ({ locations, onLocationSelect, selectedLocationId }: ProjectMapProps) => {
   const mapRef = useRef<google.maps.Map | null>(null);
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
 
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries,
-  });
+
+  // Use shared Google Maps loader from provider
+  const { isLoaded, loadError } = useGoogleMaps();
+
 
   // Center on last added location, or default to Jakarta if no locations
   const defaultCenter = useMemo(() => {
