@@ -72,95 +72,103 @@ export default function PhotorealisticMap({
     onLoad
 }: PhotorealisticMapProps) {
     const mapRef = useRef<google.maps.maps3d.Map3DElement>(null);
+    const [isCustomElementReady, setIsCustomElementReady] = useState(false);
 
-    // Initialize Map Listener (only once or when callback changes)
+    // Wait for the custom element to be defined
     useEffect(() => {
-        if (!mapRef.current) return;
+        customElements.whenDefined('gmp-map-3d').then(() => {
+            setIsCustomElementReady(true);
+        });
+    }, []);
 
-        const map = mapRef.current;
-        if (onLoad) onLoad(map);
+    // Unified Map Initialization and Update
+    useEffect(() => {
+        const initMap = async () => {
+            if (!mapRef.current) return;
 
-        // Add event listeners for camera movement
-        const handleCameraChange = () => {
-            if (onCameraChange && map.center) {
-                // Throttle this if performance is bad
-                onCameraChange({
-                    center: {
-                        lat: map.center.lat,
-                        lng: map.center.lng
-                    },
-                    zoom: rangeToZoom(map.range || 1000),
-                    heading: map.heading || 0,
-                    tilt: map.tilt || 0
-                });
+            try {
+                // 1. Ensure Library is Imported
+                console.log('Importing maps3d library...');
+                await google.maps.importLibrary('maps3d');
+                console.log('maps3d library imported.');
+
+                const map = mapRef.current;
+
+                // 2. Set Properties (Hardcoded Jakarta for Debugging)
+                console.log('Setting map properties...', { center, tilt, heading, zoom });
+
+                // Explicitly construct property objects
+                const targetCenter = {
+                    lat: -6.2088,
+                    lng: 106.8456,
+                    altitude: 0
+                };
+
+                map.center = targetCenter;
+                map.tilt = 45;
+                map.heading = 0;
+                map.range = 2000; // Explicit range
+
+                console.log('Map properties set successfully.', map.center);
+
+                // 3. Attach Listeners
+                const handleCameraChange = () => {
+                    if (onCameraChange && map.center) {
+                        onCameraChange({
+                            center: { lat: map.center.lat, lng: map.center.lng },
+                            zoom: rangeToZoom(map.range || 2000),
+                            heading: map.heading || 0,
+                            tilt: map.tilt || 0
+                        });
+                    }
+                };
+
+                map.addEventListener('gmp-center-change', handleCameraChange);
+                map.addEventListener('gmp-range-change', handleCameraChange);
+                map.addEventListener('gmp-heading-change', handleCameraChange);
+                map.addEventListener('gmp-tilt-change', handleCameraChange);
+
+                // Cleanup listeners on unmount (or re-run) - logic simplified for debug
+                // (In production, we'd return a cleanup function here, but async effects complicate that.
+                //  For debugging, adding duplicates isn't the main crash risk, but we should be careful.)
+
+            } catch (err) {
+                console.error('FAILED to initialize 3D Map:', err);
             }
         };
 
-        map.addEventListener('gmp-center-change', handleCameraChange);
-        map.addEventListener('gmp-range-change', handleCameraChange);
-        map.addEventListener('gmp-heading-change', handleCameraChange);
-        map.addEventListener('gmp-tilt-change', handleCameraChange);
+        if (isCustomElementReady && mapRef.current) {
+            initMap();
+        }
+    }, [isCustomElementReady]); // Run ONCE when element is ready. disregarding prop updates for a moment used hardcoded.
 
-        return () => {
-            map.removeEventListener('gmp-center-change', handleCameraChange);
-            map.removeEventListener('gmp-range-change', handleCameraChange);
-            map.removeEventListener('gmp-heading-change', handleCameraChange);
-            map.removeEventListener('gmp-tilt-change', handleCameraChange);
-        };
-    }, [onCameraChange, onLoad]);
-
-    // Update Map properties when props change
+    /*
+    // Verified ref attachment
     useEffect(() => {
-        if (!mapRef.current) return;
-        const map = mapRef.current;
-
-        // map.center requires altitude in 3D maps.
-        // We strictly construct the object to prevent type errors.
-        if (center) {
-            map.center = {
-                lat: typeof center.lat === 'function' ? center.lat() : Number(center.lat),
-                lng: typeof center.lng === 'function' ? center.lng() : Number(center.lng),
-                altitude: 0
-            };
+        if (mapRef.current) {
+            console.log('gmp-map-3d element mounted:', mapRef.current);
         }
+    }, [isCustomElementReady]);
+    */
 
-        // Heading & Tilt
-        map.heading = Number(heading || 0);
-        map.tilt = Number(tilt || 0);
-
-        // Range (Zoom)
-        if (zoom) {
-            map.range = zoomToRange(zoom);
-        }
-    }, [center, heading, tilt, zoom]);
+    if (!isCustomElementReady) {
+        return (
+            <div className="flex items-center justify-center h-full bg-gray-100">
+                <p className="text-gray-500">Menginisialisasi peta 3D...</p>
+            </div>
+        );
+    }
 
     return (
         // @ts-ignore - Custom element
         <gmp-map-3d
             ref={mapRef}
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: '100%', height: '500px', border: '5px solid red', display: 'block' }}
         >
-            {/* Station Markers */}
-            {stations.map(station => (
-                <Marker3DWrapper
-                    key={`station-${station.id}`}
-                    position={{ lat: station.latitude, lng: station.longitude }}
-                    title={station.name}
-                    src={(getMarkerIcon(station.type) as google.maps.Icon)?.url || ''}
-                    onClick={() => onMarkerClick({ type: 'station', data: station })}
-                />
-            ))}
-
-            {/* Candidate Markers */}
-            {candidates.map(candidate => (
-                <Marker3DWrapper
-                    key={`candidate-${candidate.id}`}
-                    position={{ lat: candidate.latitude, lng: candidate.longitude }}
-                    title="Kandidat Lokasi"
-                    src={(getMarkerIcon('CANDIDATE') as google.maps.Icon)?.url || ''}
-                    onClick={() => onMarkerClick({ type: 'candidate', data: candidate })}
-                />
-            ))}
+            {/* 
+                DEBUG: Removing all markers to rule out render crashes.
+                Use 'Hello World' state.
+            */}
         </gmp-map-3d>
     );
 }

@@ -14,7 +14,7 @@ import CandidateInfoWindow from './CandidateInfoWindow';
 import View3DToggle from './View3DToggle';
 import ScreenshotButton from './ScreenshotButton';
 import Map3DView from './Map3DView';
-import PhotorealisticMap from './PhotorealisticMap';
+
 
 interface GoogleMapComponentProps {
     stations: Station[];
@@ -29,12 +29,12 @@ interface GoogleMapComponentProps {
     mapContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-// @ts-ignore - maps3d is not yet in the type definition for libraries
-const libraries: LoadScriptProps['libraries'] = ['places', 'maps3d'];
+// @ts-ignore - maps3d removed
+const libraries: LoadScriptProps['libraries'] = ['places'];
 
 // Default center: DKI Jakarta
 const DEFAULT_CENTER = { lat: -6.2088, lng: 106.8456 };
-const DEFAULT_ZOOM = 11;
+const DEFAULT_ZOOM = 15; // Zoomed in for 3D effect
 
 export default function GoogleMapComponent({
     stations,
@@ -48,8 +48,7 @@ export default function GoogleMapComponent({
     onAnalyze,
     mapContainerRef,
 }: GoogleMapComponentProps) {
-    const [map, setMap] = useState<google.maps.Map | null>(null); // 2D Map Instance
-    const [map3D, setMap3D] = useState<google.maps.maps3d.Map3DElement | null>(null); // 3D Map Element
+    const [map, setMap] = useState<google.maps.Map | null>(null);
     const [is3DMode, setIs3DMode] = useState(false);
 
     // Store the view state (center, zoom, etc.) to persist across re-renders/remounts
@@ -63,37 +62,16 @@ export default function GoogleMapComponent({
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
         libraries,
-        version: 'beta', // Required for photorealistic 3D
     });
 
     // Toggle 3D mode logic
-    // Toggle 3D mode logic
     const toggle3DMode = useCallback(() => {
-        if (!is3DMode && map) {
-            // Switching FROM 2D TO 3D
-            // Capture current 2D state before switching
-            const currentCenter = map.getCenter();
-            viewStateRef.current = {
-                center: currentCenter ? currentCenter.toJSON() : viewStateRef.current.center,
-                zoom: map.getZoom() || viewStateRef.current.zoom,
-                heading: map.getHeading() || 0,
-                tilt: map.getTilt() || 0
-            };
-        }
-        // Switching FROM 3D TO 2D
-        // viewStateRef is already updated by handle3DCameraChange
-
         setIs3DMode(prev => !prev);
-    }, [map, is3DMode]);
+    }, []);
 
     // Handle map load
     const handleMapLoad = useCallback((mapInstance: google.maps.Map) => {
         setMap(mapInstance);
-    }, []);
-
-    // Handle 3D Camera updates to keep viewStateRef in sync
-    const handle3DCameraChange = useCallback((camera: { center: google.maps.LatLngLiteral; zoom: number; heading: number; tilt: number }) => {
-        viewStateRef.current = camera;
     }, []);
 
     // Filter stations by type and layer visibility
@@ -131,7 +109,7 @@ export default function GoogleMapComponent({
         if (is3DMode) {
             return {
                 ...baseOptions,
-                mapId: process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID,
+                mapId: process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID, // Use Vector Map for 3D
                 tilt: 45, // Initial tilt for 3D mode
                 headingInteractionEnabled: true,
                 tiltInteractionEnabled: true,
@@ -151,11 +129,14 @@ export default function GoogleMapComponent({
     if (loadError) {
         return (
             <div className="flex items-center justify-center h-full bg-gray-100">
-                <div className="text-center">
+                <div className="text-center p-4">
                     <p className="text-red-600 font-semibold mb-2">Gagal memuat peta</p>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-gray-600 text-sm mb-2">
                         Periksa koneksi internet dan API key Google Maps
                     </p>
+                    <pre className="text-xs text-red-500 bg-red-50 p-2 rounded max-w-md overflow-auto">
+                        {JSON.stringify(loadError, null, 2)}
+                    </pre>
                 </div>
             </div>
         );
@@ -180,76 +161,60 @@ export default function GoogleMapComponent({
             {/* Screenshot Button */}
             <ScreenshotButton mapContainerRef={mapContainerRef} />
 
-            {/* Google Map - Key change forces remount between modes */}
-            {/* Map Switching Logic */}
-            {is3DMode ? (
-                <PhotorealisticMap
-                    center={viewStateRef.current.center}
-                    zoom={viewStateRef.current.zoom}
-                    heading={viewStateRef.current.heading}
-                    tilt={viewStateRef.current.tilt}
-                    stations={visibleStations}
-                    candidates={visibleCandidates}
-                    onMarkerClick={onMarkerClick}
-                    onCameraChange={handle3DCameraChange}
-                    onLoad={setMap3D}
-                />
-            ) : (
-                <GoogleMap
-                    key="map-2d"
-                    mapContainerStyle={{ width: '100%', height: '100%' }}
-                    center={viewStateRef.current.center}
-                    zoom={viewStateRef.current.zoom}
-                    options={mapOptions}
-                    onClick={onMapClick}
-                    onLoad={handleMapLoad}
-                    onUnmount={() => setMap(null)}
-                >
-                    {/* Render Station Markers */}
-                    {visibleStations.map((station) => (
-                        <Marker
-                            key={station.id}
-                            position={{ lat: station.latitude, lng: station.longitude }}
-                            icon={getMarkerIcon(station.type)}
-                            title={station.name}
-                            onClick={() => onMarkerClick({ type: 'station', data: station })}
-                        />
-                    ))}
+            {/* Google Map - Key change forces remount between modes to ensure clean Map ID switch*/}
+            <GoogleMap
+                key={is3DMode ? 'map-3d-vector' : 'map-2d-raster'}
+                mapContainerStyle={{ width: '100%', height: '100%' }}
+                center={viewStateRef.current.center}
+                zoom={viewStateRef.current.zoom}
+                options={mapOptions}
+                onClick={onMapClick}
+                onLoad={handleMapLoad}
+                onUnmount={() => setMap(null)}
+            >
+                {/* Render Station Markers */}
+                {visibleStations.map((station) => (
+                    <Marker
+                        key={station.id}
+                        position={{ lat: station.latitude, lng: station.longitude }}
+                        icon={getMarkerIcon(station.type)}
+                        title={station.name}
+                        onClick={() => onMarkerClick({ type: 'station', data: station })}
+                    />
+                ))}
 
-                    {/* Render Candidate Markers */}
-                    {visibleCandidates.map((candidate) => (
-                        <Marker
-                            key={candidate.id}
-                            position={{ lat: candidate.latitude, lng: candidate.longitude }}
-                            icon={getMarkerIcon('CANDIDATE')}
-                            title="Lokasi Kandidat"
-                            onClick={() => onMarkerClick({ type: 'candidate', data: candidate })}
-                        />
-                    ))}
+                {/* Render Candidate Markers */}
+                {visibleCandidates.map((candidate) => (
+                    <Marker
+                        key={candidate.id}
+                        position={{ lat: candidate.latitude, lng: candidate.longitude }}
+                        icon={getMarkerIcon('CANDIDATE')}
+                        title="Lokasi Kandidat"
+                        onClick={() => onMarkerClick({ type: 'candidate', data: candidate })}
+                    />
+                ))}
 
-                    {/* Render Info Window */}
-                    {selectedMarker && selectedMarker.type === 'station' && (
-                        <StationInfoWindow
-                            station={selectedMarker.data as Station}
-                            onClose={onInfoWindowClose}
-                        />
-                    )}
+                {/* Render Info Window */}
+                {selectedMarker && selectedMarker.type === 'station' && (
+                    <StationInfoWindow
+                        station={selectedMarker.data as Station}
+                        onClose={onInfoWindowClose}
+                    />
+                )}
 
-                    {selectedMarker && selectedMarker.type === 'candidate' && (
-                        <CandidateInfoWindow
-                            location={selectedMarker.data as CandidateLocation}
-                            onAnalyze={onAnalyze}
-                            onDelete={() => onDeleteCandidate((selectedMarker.data as CandidateLocation).id)}
-                            onClose={onInfoWindowClose}
-                        />
-                    )}
-                </GoogleMap>
-            )}
+                {selectedMarker && selectedMarker.type === 'candidate' && (
+                    <CandidateInfoWindow
+                        location={selectedMarker.data as CandidateLocation}
+                        onAnalyze={onAnalyze}
+                        onDelete={() => onDeleteCandidate((selectedMarker.data as CandidateLocation).id)}
+                        onClose={onInfoWindowClose}
+                    />
+                )}
+            </GoogleMap>
 
             {/* 3D View Overlay - Controls & Instructions */}
             <Map3DView
                 map={map}
-                map3D={map3D}
                 is3DMode={is3DMode}
             />
         </>
