@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Zap, Battery, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Zap, Battery, MapPin, Plus } from 'lucide-react';
 import { LayerState } from '@/app/types/intelligence-planner';
 
 interface LeftSidebarProps {
