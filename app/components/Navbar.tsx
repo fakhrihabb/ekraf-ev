@@ -37,7 +37,7 @@ export default function Navbar() {
       <div className="container-custom">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-1">
             {/* Logo SVG */}
             <img src="/branding/logo.svg" alt="SIVANA Logo" className="h-10 w-10" />
             {/* Text */}
