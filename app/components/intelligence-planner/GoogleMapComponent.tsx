@@ -51,6 +51,27 @@ export default function GoogleMapComponent({
     // Default center: DKI Jakarta
     const center = useMemo(() => ({ lat: -6.2088, lng: 106.8456 }), []);
 
+    // Toggle 3D mode
+    const toggle3DMode = useCallback(() => {
+        if (!map) return;
+
+        if (is3DMode) {
+            // Switch to 2D
+            map.setTilt(0);
+            setIs3DMode(false);
+        } else {
+            // Switch to 3D
+            map.setTilt(45);
+            map.setZoom(18); // Zoom in for better 3D view
+            setIs3DMode(true);
+        }
+    }, [map, is3DMode]);
+
+    // Handle map load
+    const handleMapLoad = useCallback((mapInstance: google.maps.Map) => {
+        setMap(mapInstance);
+    }, []);
+
     if (loadError) {
         return (
             <div className="flex items-center justify-center h-full bg-gray-100">
@@ -75,26 +96,6 @@ export default function GoogleMapComponent({
         );
     }
 
-    // Toggle 3D mode
-    const toggle3DMode = useCallback(() => {
-        if (!map) return;
-
-        if (is3DMode) {
-            // Switch to 2D
-            map.setTilt(0);
-            setIs3DMode(false);
-        } else {
-            // Switch to 3D
-            map.setTilt(45);
-            map.setZoom(18); // Zoom in for better 3D view
-            setIs3DMode(true);
-        }
-    }, [map, is3DMode]);
-
-    // Handle map load
-    const handleMapLoad = useCallback((mapInstance: google.maps.Map) => {
-        setMap(mapInstance);
-    }, []);
 
     // Map options - only created after script is loaded
     const mapOptions: google.maps.MapOptions = {
