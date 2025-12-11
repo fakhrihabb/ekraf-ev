@@ -7,78 +7,87 @@ interface Map3DViewProps {
     onClose: () => void;
 }
 
-declare global {
-    interface Window {
-        google: any;
-    }
-}
-
 export default function Map3DView({ center, onClose }: Map3DViewProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        let timeoutId: NodeJS.Timeout;
+        let map3DElement: any = null;
 
         const initMap3D = async () => {
             try {
-                // Wait for google.maps to be available (max 10 seconds)
-                let attempts = 0;
-                while (!window.google?.maps?.importLibrary && attempts < 20) {
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    attempts++;
-                }
-
+                // Wait for google.maps to be available
                 if (!window.google?.maps?.importLibrary) {
                     throw new Error('Google Maps API not loaded');
                 }
 
-                // Load the maps3d library
+                // Import maps3d library
                 const { Map3DElement } = await window.google.maps.importLibrary('maps3d');
 
                 if (!containerRef.current) return;
 
                 // Create 3D map element
-                const map3DElement = new Map3DElement({
+                map3DElement = new Map3DElement({
                     center: {
                         lat: center.lat,
                         lng: center.lng,
                         altitude: 0,
                     },
-                    range: 1000, // Distance from the point
-                    heading: 0, // Direction (0 = North)
-                    tilt: 60, // Viewing angle
+                    range: 1000,
+                    tilt: 60,
+                    heading: 0,
+                    mode: 'HYBRID',
                 });
 
-                // Clear container and append map
+                // Wait for map to be ready before hiding loading
+                map3DElement.addEventListener('gmp-steadystate', ({ isSteady }: any) => {
+                    if (isSteady) {
+                        setIsLoading(false);
+                    }
+                }, { once: true });
+
+                // Handle errors
+                map3DElement.addEventListener('gmp-error', (err: any) => {
+                    console.error('3D Map error:', err);
+                    setError('Gagal memuat peta 3D. Fitur ini memerlukan API key dengan akses Maps 3D (beta).');
+                    setIsLoading(false);
+                });
+
+                // Append to container
                 containerRef.current.innerHTML = '';
                 containerRef.current.appendChild(map3DElement);
 
-                setIsLoading(false);
             } catch (err) {
-                console.error('Error loading 3D map:', err);
-                setError('Gagal memuat peta 3D. Fitur ini memerlukan API key dengan akses Maps 3D (beta). Kembali ke mode 2D.');
+                console.error('Error initializing 3D map:', err);
+                setError('Gagal memuat peta 3D. Pastikan koneksi internet stabil dan API key valid.');
                 setIsLoading(false);
             }
         };
 
+        // Start initialization
         initMap3D();
 
-        // Cleanup timeout on unmount
+        // Cleanup
         return () => {
-            if (timeoutId) clearTimeout(timeoutId);
+            if (map3DElement && containerRef.current) {
+                try {
+                    containerRef.current.innerHTML = '';
+                } catch (e) {
+                    // Ignore cleanup errors
+                }
+            }
         };
     }, [center]);
 
     if (error) {
         return (
             <div className="absolute inset-0 bg-white z-50 flex items-center justify-center">
-                <div className="text-center p-8">
-                    <p className="text-red-600 font-semibold mb-2">{error}</p>
+                <div className="text-center p-8 max-w-md">
+                    <p className="text-red-600 font-semibold mb-4">{error}</p>
                     <button
                         onClick={onClose}
-                        className="mt-4 px-4 py-2 bg-[var(--color-light-blue)] text-white rounded-lg hover:opacity-90"
+                        className="px-6 py-3 bg-[var(--color-light-blue)] text-white rounded-lg hover:opacity-90 transition-opacity"
                     >
                         Kembali ke 2D
                     </button>
@@ -90,21 +99,23 @@ export default function Map3DView({ center, onClose }: Map3DViewProps) {
     return (
         <div className="absolute inset-0 z-50">
             {isLoading && (
-                <div className="absolute inset-0 bg-white flex items-center justify-center">
+                <div className="absolute inset-0 bg-white flex items-center justify-center z-10">
                     <div className="text-center">
-                        <div className="w-12 h-12 border-4 border-[var(--color-light-blue)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-gray-600">Memuat peta 3D fotorealistik...</p>
+                        <div className="w-16 h-16 border-4 border-[var(--color-light-blue)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-gray-700 font-medium">Memuat peta 3D fotorealistik...</p>
+                        <p className="text-gray-500 text-sm mt-2">Mohon tunggu sebentar</p>
                     </div>
                 </div>
             )}
+
             <div ref={containerRef} className="w-full h-full" />
 
             {/* Close button */}
             <button
                 onClick={onClose}
-                className="absolute top-4 left-4 z-10 glass-panel px-4 py-2.5 rounded-lg flex items-center gap-2 hover:bg-white/90 transition-all shadow-md hover:shadow-lg"
+                className="absolute top-4 left-4 z-20 glass-panel px-4 py-2.5 rounded-lg flex items-center gap-2 hover:bg-white/90 transition-all shadow-md hover:shadow-lg"
             >
-                <span className="text-sm font-medium text-gray-700">Kembali ke 2D</span>
+                <span className="text-sm font-medium text-gray-700">← Kembali ke 2D</span>
             </button>
         </div>
     );
