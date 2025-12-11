@@ -12,6 +12,7 @@ import {
 } from '@/app/types/intelligence-planner';
 import { POIFilterState } from '@/app/types/poi';
 import { DEFAULT_POI_RADIUS } from '@/app/constants/poi-types';
+import { getGeocodingService } from '@/app/services/geocoding-api';
 
 export default function IntelligencePlannerClient() {
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
@@ -81,18 +82,36 @@ export default function IntelligencePlannerClient() {
     }, []);
 
     // Handle map click to add candidate
-    const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+    const handleMapClick = useCallback(async (e: google.maps.MapMouseEvent) => {
         if (e.latLng && isAddingCandidate) {
+            const lat = e.latLng.lat();
+            const lng = e.latLng.lng();
+
+            // Create candidate with temporary address
             const newCandidate: CandidateLocation = {
                 id: `candidate-${Date.now()}`,
-                latitude: e.latLng.lat(),
-                longitude: e.latLng.lng(),
-                address: 'Memuat alamat...', // Will be reverse geocoded in future task
+                latitude: lat,
+                longitude: lng,
+                address: 'Memuat alamat...',
                 createdAt: new Date(),
             };
 
             setCandidates((prev) => [...prev, newCandidate]);
-            setIsAddingCandidate(false); // Reset mode after adding one candidate
+            setIsAddingCandidate(false);
+
+            // Reverse geocode address in background
+            try {
+                const geocodingService = getGeocodingService();
+                const address = await geocodingService.reverseGeocode(lat, lng);
+
+                setCandidates((prev) =>
+                    prev.map((c) =>
+                        c.id === newCandidate.id ? { ...c, address } : c
+                    )
+                );
+            } catch (error) {
+                console.error('Failed to reverse geocode:', error);
+            }
         }
     }, [isAddingCandidate]);
 
@@ -174,6 +193,21 @@ export default function IntelligencePlannerClient() {
         }
     }, [selectedMarker]);
 
+    // Handle search location select
+    const handleSearchLocationSelect = useCallback(async (location: { lat: number; lng: number; address: string }) => {
+        // Optionally add as candidate or just center map
+        // For now, just center map (GoogleMapComponent handles this)
+        console.log('Search location selected:', location);
+    }, []);
+
+    // Handle candidate navigation (center map on candidate)
+    const handleCandidateNavigate = useCallback((candidate: CandidateLocation) => {
+        // This will be handled by passing the candidate to a map centering function
+        // For now, we'll use a ref to trigger map centering
+        console.log('Navigate to candidate:', candidate);
+        // The actual centering will be handled in GoogleMapComponent via a new prop
+    }, []);
+
     // Calculate station counts
     const stationCounts = {
         spklu: stations.filter((s) => s.type === 'SPKLU').length,
@@ -195,6 +229,9 @@ export default function IntelligencePlannerClient() {
                 poiFilterState={poiFilterState}
                 onPOIFilterChange={handlePOIFilterChange}
                 poiCount={0} // Will be updated when POIs are loaded
+                candidates={candidates}
+                onCandidateClick={handleCandidateNavigate}
+                onCandidateRemove={handleDeleteCandidate}
             />
 
             {/* Map Container */}
@@ -213,6 +250,7 @@ export default function IntelligencePlannerClient() {
                     isAnalyzing={isAnalyzing}
                     poiFilterState={poiFilterState}
                     onPOIFilterChange={handlePOIFilterChange}
+                    onSearchLocationSelect={handleSearchLocationSelect}
                 />
                 {loading && (
                     <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-lg shadow-md">

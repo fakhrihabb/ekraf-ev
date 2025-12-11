@@ -1,9 +1,10 @@
 'use client';
 
 import { ChevronLeft, ChevronRight, Zap, Battery, MapPin, Plus } from 'lucide-react';
-import { LayerState } from '@/app/types/intelligence-planner';
+import { LayerState, CandidateLocation } from '@/app/types/intelligence-planner';
 import { POIFilterState } from '@/app/types/poi';
 import POIFilterPanel from './POIFilterPanel';
+import CandidateList from './CandidateList';
 
 interface LeftSidebarProps {
     isOpen: boolean;
@@ -20,6 +21,9 @@ interface LeftSidebarProps {
     poiFilterState: POIFilterState;
     onPOIFilterChange: (filterState: POIFilterState) => void;
     poiCount: number;
+    candidates: CandidateLocation[];
+    onCandidateClick: (candidate: CandidateLocation) => void;
+    onCandidateRemove: (id: string) => void;
 }
 
 export default function LeftSidebar({
@@ -33,6 +37,9 @@ export default function LeftSidebar({
     poiFilterState,
     onPOIFilterChange,
     poiCount,
+    candidates,
+    onCandidateClick,
+    onCandidateRemove,
 }: LeftSidebarProps) {
     return (
         <div
@@ -144,6 +151,13 @@ export default function LeftSidebar({
                             filterState={poiFilterState}
                             onFilterChange={onPOIFilterChange}
                             poiCount={poiCount}
+                        />
+
+                        {/* Candidate List */}
+                        <CandidateList
+                            candidates={candidates}
+                            onCandidateClick={onCandidateClick}
+                            onCandidateRemove={onCandidateRemove}
                         />
 
                         {/* Info */}

@@ -70,7 +70,7 @@ export default function ScreenshotButton({ mapContainerRef }: ScreenshotButtonPr
         <button
             onClick={handleScreenshot}
             disabled={isCapturing}
-            className="absolute top-4 left-28 z-10 glass-panel px-4 py-2.5 rounded-lg flex items-center gap-2 hover:bg-white/90 transition-all shadow-md hover:shadow-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+            className="absolute bottom-4 left-28 z-10 glass-panel px-4 py-2.5 rounded-lg flex items-center gap-2 hover:bg-white/90 transition-all shadow-md hover:shadow-lg group disabled:opacity-50 disabled:cursor-not-allowed"
             title="Tangkap Screenshot"
         >
             {isCapturing ? (

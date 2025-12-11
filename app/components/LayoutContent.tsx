@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import Navbar from './Navbar';
 
 export default function LayoutContent({
     children,
@@ -11,8 +12,11 @@ export default function LayoutContent({
     const isLandingPage = pathname === '/';
 
     return (
-        <div className={isLandingPage ? '' : 'pt-16'}>
-            {children}
-        </div>
+        <>
+            <Navbar />
+            <div className={isLandingPage ? '' : 'pt-16'}>
+                {children}
+            </div>
+        </>
     );
 }
