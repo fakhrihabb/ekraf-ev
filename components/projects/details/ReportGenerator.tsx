@@ -107,7 +107,7 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
         doc.rect(0, 0, pageWidth, MARGIN.headerHeight - 2, "F");
         doc.setFillColor(...BRAND.blue);
         doc.rect(0, MARGIN.headerHeight - 2, pageWidth, 2, "F");
-        
+
         // Header text (except first page which is cover)
         if (!isFirstPage) {
           doc.setFontSize(9);
@@ -118,12 +118,12 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
           doc.setFontSize(8);
           doc.text("Laporan Analisis Lokasi", pageWidth - MARGIN.right, 9, { align: "right" });
         }
-        
+
         // Footer line
         doc.setDrawColor(...BRAND.lightBlue);
         doc.setLineWidth(0.5);
         doc.line(MARGIN.left, pageHeight - MARGIN.footerHeight, pageWidth - MARGIN.right, pageHeight - MARGIN.footerHeight);
-        
+
         // Footer text
         doc.setFontSize(8);
         doc.setTextColor(...BRAND.gray500);
@@ -139,36 +139,36 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
       // Full cover design with gradient
       doc.setFillColor(...BRAND.darkBlue);
       doc.rect(0, 0, pageWidth, pageHeight, "F");
-      
+
       // Add accent bar
       doc.setFillColor(...BRAND.blue);
       doc.rect(0, pageHeight * 0.35, pageWidth, 5, "F");
       doc.setFillColor(...BRAND.lightBlue);
       doc.rect(0, pageHeight * 0.35 + 5, pageWidth, 2, "F");
-      
+
       // Title
       doc.setFontSize(28);
       doc.setTextColor(...BRAND.white);
       doc.setFont("helvetica", "bold");
       doc.text("LAPORAN ANALISIS", pageWidth / 2, pageHeight * 0.45, { align: "center" });
       doc.text("LOKASI SPKLU/SPBKLU", pageWidth / 2, pageHeight * 0.45 + 12, { align: "center" });
-      
+
       // Project name
       doc.setFontSize(18);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...BRAND.lightBlue);
       doc.text(project.name, pageWidth / 2, pageHeight * 0.55, { align: "center" });
-      
+
       // Date
       doc.setFontSize(11);
       doc.setTextColor(...BRAND.gray400);
       doc.text(dateStr, pageWidth / 2, pageHeight * 0.62, { align: "center" });
-      
+
       // Bottom branding
       doc.setFontSize(10);
       doc.setTextColor(...BRAND.gray500);
       doc.text("Dibuat oleh SIVANA Platform", pageWidth / 2, pageHeight - 30, { align: "center" });
-      
+
       // Bottom accent
       doc.setFillColor(...BRAND.lightBlue);
       doc.rect(0, pageHeight - 15, pageWidth, 15, "F");
@@ -176,39 +176,39 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
       // --- PAGE 2: EXEC SUMMARY ---
       doc.addPage();
       addHeaderFooter(2, totalPages);
-      
+
       let yPos = MARGIN.top + 5;
-      
+
       doc.setFontSize(18);
       doc.setTextColor(...BRAND.darkBlue);
       doc.setFont("helvetica", "bold");
       doc.text("Ringkasan Eksekutif", MARGIN.left, yPos);
-      
+
       yPos += 15;
       doc.setFontSize(10);
       doc.setTextColor(...BRAND.gray700);
       doc.setFont("helvetica", "normal");
       const summaryText = `Laporan ini menyajikan hasil analisis mendalam untuk proyek "${project.name}". ` +
-                          `Tujuan utama adalah mengidentifikasi lokasi optimal untuk infrastruktur EV. ` +
-                          `Analisis mencakup ${project.locations.length} lokasi kandidat dengan mempertimbangkan faktor permintaan, jaringan listrik, dan aksesibilitas.`;
-      
+        `Tujuan utama adalah mengidentifikasi lokasi optimal untuk infrastruktur EV. ` +
+        `Analisis mencakup ${project.locations.length} lokasi kandidat dengan mempertimbangkan faktor permintaan, jaringan listrik, dan aksesibilitas.`;
+
       const splitSummary = doc.splitTextToSize(summaryText, contentWidth);
       doc.text(splitSummary, MARGIN.left, yPos);
-      
+
       yPos += splitSummary.length * 5 + 15;
-      
+
       // Objective section with styled box
       doc.setFillColor(...BRAND.gray50);
       doc.setDrawColor(...BRAND.lightBlue);
       doc.setLineWidth(0.5);
       doc.roundedRect(MARGIN.left, yPos, contentWidth, 35, 3, 3, "FD");
-      
+
       yPos += 10;
       doc.setFontSize(11);
       doc.setTextColor(...BRAND.blue);
       doc.setFont("helvetica", "bold");
       doc.text("Tujuan Proyek", MARGIN.left + 8, yPos);
-      
+
       yPos += 8;
       doc.setFontSize(10);
       doc.setTextColor(...BRAND.gray700);
@@ -220,18 +220,18 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
       for (const [index, loc] of project.locations.entries()) {
         doc.addPage();
         addHeaderFooter(3 + index, totalPages);
-        
+
         let locY = MARGIN.top + 5;
-        
+
         // Section title with accent
         doc.setFillColor(...BRAND.lightBlue);
         doc.rect(MARGIN.left, locY - 4, 3, 12, "F");
-        
+
         doc.setFontSize(16);
         doc.setTextColor(...BRAND.darkBlue);
         doc.setFont("helvetica", "bold");
         doc.text(`Analisis Lokasi ${index + 1}: ${loc.name}`, MARGIN.left + 8, locY + 4);
-        
+
         locY += 18;
         doc.setFontSize(10);
         doc.setTextColor(...BRAND.gray700);
@@ -239,9 +239,9 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
         doc.text(`Alamat: ${loc.address || "Lat: " + loc.latitude.toFixed(5) + ", Lng: " + loc.longitude.toFixed(5)}`, MARGIN.left, locY);
         locY += 6;
         doc.text(`Koordinat: ${loc.latitude.toFixed(5)}, ${loc.longitude.toFixed(5)}`, MARGIN.left, locY);
-        
+
         locY += 12;
-        
+
         // Map Snapshot - conditional based on user choice
         if (withMaps) {
           try {
@@ -269,15 +269,16 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
             doc.setFillColor(...BRAND.gray50);
             doc.setDrawColor(...BRAND.gray200);
             doc.rect(MARGIN.left, locY, contentWidth, 75, "FD");
-            
+
             doc.setFontSize(10);
             doc.setTextColor(...BRAND.gray500);
-            doc.text("Peta tidak tersedia", pageWidth / 2, locY + 35, { align: "center" });
-            
+            doc.text("Peta tidak tersedia", pageWidth / 2, locY + 30, { align: "center" });
+
             doc.setFontSize(8);
             doc.setTextColor(...BRAND.gray400);
-            doc.text("(Cek 'API Restrictions' pada Google Cloud Console Anda)", pageWidth / 2, locY + 45, { align: "center" });
-            
+            const errorMsg = doc.splitTextToSize("Pastikan Google Maps Static API diaktifkan dan API Key memiliki akses. Cek 'API Restrictions' di Google Cloud Console.", contentWidth - 20);
+            doc.text(errorMsg, pageWidth / 2, locY + 40, { align: "center" });
+
             locY += 80;
           }
         } else {
@@ -285,15 +286,15 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
           doc.setFillColor(...BRAND.gray50);
           doc.setDrawColor(...BRAND.gray200);
           doc.rect(MARGIN.left, locY, contentWidth, 75, "FD");
-          
+
           doc.setFontSize(10);
           doc.setTextColor(...BRAND.gray500);
           doc.text("Peta dinonaktifkan (Mode Dev)", pageWidth / 2, locY + 35, { align: "center" });
-          
+
           doc.setFontSize(8);
           doc.setTextColor(...BRAND.gray400);
           doc.text("Aktifkan 'Sertakan Peta Lokasi' saat generate untuk menampilkan", pageWidth / 2, locY + 45, { align: "center" });
-          
+
           locY += 80;
         }
 
@@ -316,7 +317,7 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
           head: [tableData[0]],
           body: tableData.slice(1),
           theme: 'grid',
-          headStyles: { 
+          headStyles: {
             fillColor: BRAND.darkBlue,
             textColor: BRAND.white,
             fontStyle: 'bold',
@@ -336,16 +337,83 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
           }
         });
 
+        // Get finalY after scores table
+        let currentY = (doc as any).lastAutoTable.finalY || locY + 60;
+
+        // --- SOLAR ANALYSIS SECTION ---
+        if (loc.analysis?.solar_score && loc.analysis?.solar_analysis_json) {
+          currentY += 15;
+          const solarData = loc.analysis.solar_analysis_json;
+
+          // Section header
+          doc.setFillColor(...BRAND.lightBlue);
+          doc.rect(MARGIN.left, currentY - 4, 3, 12, "F");
+
+          doc.setFontSize(12);
+          doc.setTextColor(...BRAND.darkBlue);
+          doc.setFont("helvetica", "bold");
+          doc.text("Analisis Potensi Solar Panel", MARGIN.left + 8, currentY + 4);
+
+          currentY += 14;
+          doc.setFontSize(10);
+          doc.setTextColor(...BRAND.gray700);
+          doc.setFont("helvetica", "normal");
+          doc.text(`Skor Solar: ${loc.analysis.solar_score}/100`, MARGIN.left, currentY);
+
+          currentY += 10;
+
+          // Solar ROI table
+          const solarTableData = [
+            ["Metrik", "Nilai"],
+            ["Kapasitas Panel", `${solarData.panel_capacity_kw || '-'} kW`],
+            ["Produksi Tahunan", `${solarData.annual_production_kwh ? solarData.annual_production_kwh.toLocaleString('id-ID') : '-'} kWh`],
+            ["Payback Period", `${solarData.payback_period_years || '-'} tahun`],
+            ["ROI 25 Tahun", solarData.roi_25_year ? `Rp ${(solarData.roi_25_year / 1000000).toFixed(1)}M` : '-'],
+            ["Penghematan/Tahun", solarData.annual_savings ? `Rp ${(solarData.annual_savings / 1000000).toFixed(1)}M` : '-'],
+          ];
+
+          autoTable(doc, {
+            startY: currentY,
+            margin: { left: MARGIN.left, right: MARGIN.right },
+            head: [solarTableData[0]],
+            body: solarTableData.slice(1),
+            theme: 'grid',
+            headStyles: {
+              fillColor: [255, 152, 0] as [number, number, number], // Orange
+              textColor: BRAND.white,
+              fontStyle: 'bold',
+              fontSize: 9
+            },
+            bodyStyles: {
+              fontSize: 9,
+              textColor: BRAND.gray700
+            },
+            columnStyles: {
+              0: { cellWidth: 80 },
+              1: { halign: 'right', fontStyle: 'bold' }
+            }
+          });
+
+          currentY = (doc as any).lastAutoTable.finalY + 8;
+
+          // Monthly production note
+          if (solarData.monthly_production && Array.isArray(solarData.monthly_production)) {
+            doc.setFontSize(9);
+            doc.setTextColor(...BRAND.gray500);
+            doc.text(`Produksi bulanan bervariasi: ${Math.min(...solarData.monthly_production).toFixed(0)} - ${Math.max(...solarData.monthly_production).toFixed(0)} kWh/bulan`, MARGIN.left, currentY);
+            currentY += 6;
+          }
+        }
+
         // Notes section
         if (loc.notes) {
-          const finalY = (doc as any).lastAutoTable.finalY || locY + 60;
-          const notesY = finalY + 12;
-          
+          const notesY = currentY + 8;
+
           doc.setFontSize(11);
           doc.setTextColor(...BRAND.blue);
           doc.setFont("helvetica", "bold");
           doc.text("Catatan Tambahan:", MARGIN.left, notesY);
-          
+
           doc.setFontSize(10);
           doc.setTextColor(...BRAND.gray700);
           doc.setFont("helvetica", "italic");
@@ -359,24 +427,24 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
       if (chartContainer) {
         doc.addPage();
         addHeaderFooter(totalPages, totalPages);
-        
+
         let chartY = MARGIN.top + 5;
-        
+
         doc.setFillColor(...BRAND.lightBlue);
         doc.rect(MARGIN.left, chartY - 4, 3, 12, "F");
-        
+
         doc.setFontSize(16);
         doc.setTextColor(...BRAND.darkBlue);
         doc.setFont("helvetica", "bold");
         doc.text("Perbandingan Visual", MARGIN.left + 8, chartY + 4);
-        
+
         try {
           const canvas = await html2canvas(chartContainer);
           const imgData = canvas.toDataURL("image/png");
           const imgProps = doc.getImageProperties(imgData);
           const pdfWidth = contentWidth;
           const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-          
+
           doc.addImage(imgData, 'PNG', MARGIN.left, chartY + 15, pdfWidth, pdfHeight);
         } catch (e) {
           console.error("Failed to capture charts", e);
@@ -388,7 +456,7 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
 
       // --- UPLOAD / SAVE ---
       const pdfBlob = doc.output('blob');
-      
+
       const formData = new FormData();
       formData.append("file", pdfBlob, `report-${project.id}.pdf`);
 
@@ -409,7 +477,7 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         // 3. Upload to Supabase Storage (Background)
         try {
           const fileName = `Laporan_Analisis_${project.name.replace(/\s+/g, '_')}_${dateStr.replace(/\s+/g, '-')}.pdf`;
@@ -438,8 +506,8 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
     <>
       <div className="flex items-center">
         {reportUrl ? (
-          <a 
-            href={reportUrl} 
+          <a
+            href={reportUrl}
             download={`Laporan_Analisis_${project.name.replace(/\s+/g, '_')}.pdf`}
             className="flex items-center gap-2 px-4 py-2 bg-[#134474] text-white rounded-lg hover:bg-[#0D263F] transition-colors shadow-sm font-semibold text-sm"
           >
@@ -461,7 +529,7 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
       {mounted && showModal && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col transform transition-all scale-100">
-            
+
             {/* Header */}
             <div className="p-5 flex justify-between items-start border-b border-gray-100">
               <div className="flex items-center gap-3">
@@ -480,15 +548,15 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
 
             {/* Content */}
             <div className="p-0 overflow-y-auto max-h-[60vh]">
-              
+
               {/* Historical Reports Section */}
               <div className="px-6 pt-4">
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                   <History className="w-4 h-4 text-brand-primary" /> Riwayat Laporan
                 </h3>
-                
+
                 {isLoadingReports ? (
-                   <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+                  <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
                 ) : reports.length > 0 ? (
                   <div className="space-y-2 mb-6">
                     {reports.map((rpt) => (
@@ -502,7 +570,7 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
                             {(rpt.size_bytes / 1024).toFixed(0)} KB
                           </p>
                         </div>
-                        <button 
+                        <button
                           onClick={() => handleDownloadReport(rpt)}
                           className="p-2 text-brand-primary hover:bg-brand-primary/10 rounded-md transition-colors"
                           title="Unduh PDF"
@@ -524,20 +592,20 @@ export const ReportGenerator = ({ project }: ReportGeneratorProps) => {
               {/* Generate New Section */}
               <div className="px-6 pb-6">
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">Buat Laporan Baru</h3>
-                
+
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div>
-                  <span className="font-medium text-gray-800">Sertakan Peta Lokasi</span>
-                  <p className="text-sm text-gray-500 mt-0.5">Menyertakan gambar peta visual untuk setiap lokasi.</p>
+                  <div>
+                    <span className="font-medium text-gray-800">Sertakan Peta Lokasi</span>
+                    <p className="text-sm text-gray-500 mt-0.5">Menyertakan gambar peta visual untuk setiap lokasi.</p>
+                  </div>
+                  {/* Slider Toggle */}
+                  <button
+                    onClick={() => setIncludeMaps(!includeMaps)}
+                    className={`relative w-14 h-8 rounded-full transition-colors duration-200 ${includeMaps ? 'bg-[#134474]' : 'bg-gray-300'}`}
+                  >
+                    <span className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-200 ${includeMaps ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </button>
                 </div>
-                {/* Slider Toggle */}
-                <button 
-                  onClick={() => setIncludeMaps(!includeMaps)}
-                  className={`relative w-14 h-8 rounded-full transition-colors duration-200 ${includeMaps ? 'bg-[#134474]' : 'bg-gray-300'}`}
-                >
-                  <span className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-200 ${includeMaps ? 'translate-x-6' : 'translate-x-0'}`} />
-                </button>
-              </div>
               </div>
             </div>
 

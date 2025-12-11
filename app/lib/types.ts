@@ -7,9 +7,11 @@ export interface Analysis {
   accessibility_score: number;
   competition_score: number;
   overall_score: number;
+  solar_score?: number;
   insights_text?: string;
   recommendation?: string;
   financial_data_json?: any;
+  solar_analysis_json?: any;
   created_at: string;
 }
 
