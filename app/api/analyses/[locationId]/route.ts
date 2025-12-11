@@ -49,6 +49,7 @@ export async function GET(
                 accessibility: analysis.accessibility_score,
                 competition: analysis.competition_score,
                 overall: analysis.overall_score,
+                ...(analysis.solar_score !== null && { solar: analysis.solar_score }),
             },
             recommendation: {
                 type: analysis.recommendation,
@@ -56,6 +57,7 @@ export async function GET(
             },
             insights: analysis.insights_text,
             analyzed_at: analysis.created_at,
+            ...(analysis.solar_analysis_json && { solarAnalysis: analysis.solar_analysis_json }),
         })) || [];
 
         return NextResponse.json({

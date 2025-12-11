@@ -14,6 +14,7 @@ export interface LocationComparison {
         accessibility: number;
         competition: number;
         overall: number;
+        solar?: number;
     };
     rankings: {
         demand: number;
@@ -21,6 +22,7 @@ export interface LocationComparison {
         accessibility: number;
         competition: number;
         overall: number;
+        solar?: number;
     };
     strengths: string[];
     weaknesses: string[];
@@ -35,6 +37,7 @@ export interface ComparisonResult {
         grid: string;
         accessibility: string;
         competition: string;
+        solar?: string;
     };
     recommendations: string;
 }
@@ -52,6 +55,7 @@ export function compareLocations(
             accessibility: number;
             competition: number;
             overall: number;
+            solar?: number;
         };
         recommendation?: string;
     }>
@@ -67,7 +71,7 @@ export function compareLocations(
     // Calculate rankings for each metric
     const rankByMetric = (metric: keyof typeof locations[0]['scores']) => {
         const sorted = [...locations].sort(
-            (a, b) => b.scores[metric] - a.scores[metric]
+            (a, b) => (b.scores[metric] || 0) - (a.scores[metric] || 0)
         );
         const rankings = new Map<string, number>();
         sorted.forEach((loc, index) => {
@@ -82,6 +86,10 @@ export function compareLocations(
     const competitionRankings = rankByMetric('competition');
     const overallRankings = rankByMetric('overall');
 
+    // Solar rankings (if any location has solar data)
+    const hasSolarData = locations.some(l => l.scores.solar !== undefined);
+    const solarRankings = hasSolarData ? rankByMetric('solar' as any) : null;
+
     // Build comparison for each location
     const comparisons: LocationComparison[] = locations.map((loc) => {
         const rankings = {
@@ -90,6 +98,7 @@ export function compareLocations(
             accessibility: accessibilityRankings.get(loc.address) || 0,
             competition: competitionRankings.get(loc.address) || 0,
             overall: overallRankings.get(loc.address) || 0,
+            ...(solarRankings && { solar: solarRankings.get(loc.address) || 0 }),
         };
 
         // Identify strengths (rank 1 or 2)
@@ -98,6 +107,7 @@ export function compareLocations(
         if (rankings.grid <= 2) strengths.push('Kesiapan Grid');
         if (rankings.accessibility <= 2) strengths.push('Aksesibilitas');
         if (rankings.competition <= 2) strengths.push('Kompetisi Rendah');
+        if (rankings.solar && rankings.solar <= 2) strengths.push('Potensi Solar Panel');
 
         // Identify weaknesses (worst or second worst)
         const weaknesses: string[] = [];
@@ -106,6 +116,7 @@ export function compareLocations(
         if (rankings.grid >= worstRank - 1) weaknesses.push('Grid');
         if (rankings.accessibility >= worstRank - 1) weaknesses.push('Aksesibilitas');
         if (rankings.competition >= worstRank - 1) weaknesses.push('Kompetisi');
+        if (rankings.solar && rankings.solar >= worstRank - 1) weaknesses.push('Potensi Solar');
 
         return {
             address: loc.address,
@@ -136,11 +147,14 @@ export function compareLocations(
     const bestCompetition = comparisons.reduce((best, current) =>
         current.scores.competition > best.scores.competition ? current : best
     );
+    const bestSolar = hasSolarData ? comparisons.reduce((best, current) =>
+        (current.scores.solar || 0) > (best.scores.solar || 0) ? current : best
+    ) : null;
 
     // Generate recommendations
     const recommendations = `Berdasarkan perbandingan ${locations.length} lokasi, ${bestOverall.address} merupakan pilihan terbaik secara keseluruhan dengan skor ${bestOverall.scores.overall}/100. ${bestOverall.strengths.length > 0
-            ? `Kekuatan utama: ${bestOverall.strengths.join(', ')}.`
-            : ''
+        ? `Kekuatan utama: ${bestOverall.strengths.join(', ')}.`
+        : ''
         } ${bestOverall.weaknesses.length > 0
             ? `Perhatian: ${bestOverall.weaknesses.join(', ')}.`
             : ''
@@ -154,6 +168,7 @@ export function compareLocations(
             grid: bestGrid.address,
             accessibility: bestAccessibility.address,
             competition: bestCompetition.address,
+            ...(bestSolar && { solar: bestSolar.address }),
         },
         recommendations,
     };

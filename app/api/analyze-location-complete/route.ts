@@ -47,13 +47,6 @@ export async function POST(request: NextRequest) {
         // Generate recommendation
         const recommendation = generateRecommendation(scores);
 
-        // Generate AI insights with Gemini
-        const insights = await generateInsights(
-            address || 'Lokasi tidak diketahui',
-            scores,
-            recommendation
-        );
-
         // Solar Panel Analysis
         console.log('Starting solar analysis...');
         let solarScore = null;
@@ -113,6 +106,15 @@ export async function POST(request: NextRequest) {
             console.error('Solar analysis failed:', solarError);
             // Continue without solar data - don't fail entire analysis
         }
+
+        // Generate AI insights with Gemini (now includes solar data)
+        const insights = await generateInsights(
+            address || 'Lokasi tidak diketahui',
+            scores,
+            recommendation,
+            solarScore,
+            solarAnalysisJson
+        );
 
         const analyzedAt = new Date().toISOString();
 

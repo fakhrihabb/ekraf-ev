@@ -29,13 +29,15 @@ function getGeminiClient() {
 export async function generateInsights(
     address: string,
     scores: AnalysisScores,
-    recommendation: Recommendation
+    recommendation: Recommendation,
+    solarScore?: number | null,
+    solarAnalysis?: any
 ): Promise<string> {
     const client = getGeminiClient();
 
     if (!client) {
         // Fallback to template-based insights
-        return generateFallbackInsights(scores, recommendation.type);
+        return generateFallbackInsights(scores, recommendation.type, solarScore, solarAnalysis);
     }
 
     try {
@@ -47,14 +49,22 @@ export async function generateInsights(
             },
         });
 
+        // Build solar info for prompt
+        let solarInfo = '';
+        if (solarScore !== null && solarScore !== undefined && solarAnalysis) {
+            const payback = solarAnalysis.roi_analysis?.payback_period_years || 0;
+            const roi25yr = solarAnalysis.roi_analysis?.roi_25_years_percent || 0;
+            solarInfo = `\nSolar: Skor ${solarScore}, Payback ${payback.toFixed(1)} tahun, ROI 25-tahun ${Math.round(roi25yr)}%`;
+        }
+
         // Optimized prompt (shorter, more specific)
         const prompt = `Analisis lokasi infrastruktur EV di Indonesia:
 Lokasi: ${address}
-Skor: Permintaan ${scores.demand}, Grid ${scores.grid}, Akses ${scores.accessibility}, Kompetisi ${scores.competition}, Overall ${scores.overall}
+Skor: Permintaan ${scores.demand}, Grid ${scores.grid}, Akses ${scores.accessibility}, Kompetisi ${scores.competition}${solarInfo}, Overall ${scores.overall}
 Rekomendasi: ${recommendation.type}
 
 Tulis analisis 150-200 kata (Bahasa Indonesia) yang mencakup:
-1. Kekuatan utama lokasi
+1. Kekuatan utama lokasi${solarScore ? ' (termasuk potensi solar panel)' : ''}
 2. Risiko/kekhawatiran
 3. Perbandingan dengan area lain
 4. Rekomendasi spesifik
@@ -65,17 +75,22 @@ Gunakan bahasa profesional, jangan sebutkan angka berlebihan.`;
         const response = await result.response;
         const text = response.text();
 
-        return text || generateFallbackInsights(scores, recommendation.type);
+        return text || generateFallbackInsights(scores, recommendation.type, solarScore, solarAnalysis);
     } catch (error) {
         console.error('Error generating insights with Gemini:', error);
-        return generateFallbackInsights(scores, recommendation.type);
+        return generateFallbackInsights(scores, recommendation.type, solarScore, solarAnalysis);
     }
 }
 
 /**
  * Fallback template-based insights
  */
-function generateFallbackInsights(scores: AnalysisScores, type: string): string {
+function generateFallbackInsights(
+    scores: AnalysisScores,
+    type: string,
+    solarScore?: number | null,
+    solarAnalysis?: any
+): string {
     const { demand, grid, accessibility, competition, overall } = scores;
 
     let insights = `Analisis untuk lokasi ini menunjukkan skor kelayakan keseluruhan sebesar ${overall}/100. `;
@@ -86,6 +101,10 @@ function generateFallbackInsights(scores: AnalysisScores, type: string): string 
     if (grid > 70) strengths.push('kesiapan jaringan listrik yang baik');
     if (accessibility > 70) strengths.push('aksesibilitas yang sangat baik');
     if (competition > 70) strengths.push('tingkat kompetisi yang rendah');
+    if (solarScore && solarScore > 70) {
+        const payback = solarAnalysis?.roi_analysis?.payback_period_years || 0;
+        strengths.push(`potensi solar panel yang sangat baik (payback ${payback.toFixed(1)} tahun)`);
+    }
 
     if (strengths.length > 0) {
         insights += `Kekuatan utama lokasi ini adalah ${strengths.join(', ')}. `;
@@ -112,7 +131,17 @@ function generateFallbackInsights(scores: AnalysisScores, type: string): string 
     }
 
     // Financial note
-    insights += `Proyeksi finansial menunjukkan potensi pengembalian investasi yang layak dengan estimasi modal dan pendapatan yang telah diperhitungkan.`;
+    insights += `Proyeksi finansial menunjukkan potensi pengembalian investasi yang layak dengan estimasi modal dan pendapatan yang telah diperhitungkan. `;
+
+    // Solar note
+    if (solarScore && solarAnalysis) {
+        const roi25yr = solarAnalysis.roi_analysis?.roi_25_years_percent || 0;
+        if (solarScore > 70) {
+            insights += `Potensi solar panel sangat baik dengan ROI 25-tahun mencapai ${Math.round(roi25yr)}%.`;
+        } else if (solarScore > 50) {
+            insights += `Potensi solar panel cukup baik untuk supplemental power.`;
+        }
+    }
 
     return insights;
 }

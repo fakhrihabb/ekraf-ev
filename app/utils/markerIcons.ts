@@ -11,20 +11,22 @@ export const getCandidateMarkerColor = (score?: number): string => {
     return '#8B4513'; // Brown
   }
 
-  // Red (0) → Yellow (50) → Green (100) gradient
+  // Beautiful gradient: Red (#EF4444) → Yellow (#FBBF24) → Teal Green (#10B981)
   if (score <= 50) {
     // Red to Yellow (0-50)
     const ratio = score / 50;
-    const r = 255;
-    const g = Math.round(165 + (255 - 165) * ratio); // 165 (dark yellow) to 255
-    const b = 0;
+    // Start: #EF4444 (239, 68, 68) → End: #FBBF24 (251, 191, 36)
+    const r = Math.round(239 + (251 - 239) * ratio);
+    const g = Math.round(68 + (191 - 68) * ratio);
+    const b = Math.round(68 + (36 - 68) * ratio);
     return `rgb(${r}, ${g}, ${b})`;
   } else {
-    // Yellow to Green (50-100)
+    // Yellow to Teal Green (50-100)
     const ratio = (score - 50) / 50;
-    const r = Math.round(255 * (1 - ratio));
-    const g = 255;
-    const b = 0;
+    // Start: #FBBF24 (251, 191, 36) → End: #10B981 (16, 185, 129)
+    const r = Math.round(251 + (16 - 251) * ratio);
+    const g = Math.round(191 + (185 - 191) * ratio);
+    const b = Math.round(36 + (129 - 36) * ratio);
     return `rgb(${r}, ${g}, ${b})`;
   }
 };
