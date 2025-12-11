@@ -4,11 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Map, FolderKanban } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { LoadScript } from '@react-google-maps/api';
 import SearchBar from './intelligence-planner/SearchBar';
 
 interface NavbarProps {
   onSearchLocationSelect?: (location: { lat: number; lng: number; address: string }) => void;
 }
+
+const libraries: ('places')[] = ['places'];
 
 export default function Navbar({ onSearchLocationSelect }: NavbarProps = {}) {
   const pathname = usePathname();
@@ -54,12 +57,17 @@ export default function Navbar({ onSearchLocationSelect }: NavbarProps = {}) {
           <div className="flex items-center gap-6">
             {/* Search Bar - Only on Intelligence Planner */}
             {isIntelligencePlanner && onSearchLocationSelect && (
-              <div className="w-96">
-                <SearchBar
-                  onLocationSelect={onSearchLocationSelect}
-                  placeholder="Cari alamat atau koordinat..."
-                />
-              </div>
+              <LoadScript
+                googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
+                libraries={libraries}
+              >
+                <div className="w-96">
+                  <SearchBar
+                    onLocationSelect={onSearchLocationSelect}
+                    placeholder="Cari alamat atau koordinat..."
+                  />
+                </div>
+              </LoadScript>
             )}
 
             <Link
