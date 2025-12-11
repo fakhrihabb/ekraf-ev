@@ -11,15 +11,41 @@ export default function Map3DView({ center, onClose }: Map3DViewProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const scriptLoadedRef = useRef(false);
 
     useEffect(() => {
         let map3DElement: any = null;
 
-        const initMap3D = async () => {
+        const loadScriptAndInitMap = async () => {
             try {
+                // Load the Google Maps script if not already loaded
+                if (!scriptLoadedRef.current) {
+                    const existingScript = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"][src*="v=beta"]');
+
+                    if (!existingScript) {
+                        const script = document.createElement('script');
+                        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&v=beta&libraries=maps3d`;
+                        script.async = true;
+
+                        await new Promise((resolve, reject) => {
+                            script.onload = resolve;
+                            script.onerror = reject;
+                            document.head.appendChild(script);
+                        });
+                    }
+
+                    scriptLoadedRef.current = true;
+                }
+
                 // Wait for google.maps to be available
+                let attempts = 0;
+                while (!window.google?.maps?.importLibrary && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+
                 if (!window.google?.maps?.importLibrary) {
-                    throw new Error('Google Maps API not loaded');
+                    throw new Error('Google Maps API failed to load');
                 }
 
                 // Import maps3d library
@@ -40,17 +66,18 @@ export default function Map3DView({ center, onClose }: Map3DViewProps) {
                     mode: 'HYBRID',
                 });
 
-                // Wait for map to be ready before hiding loading
+                // Wait for map to be ready
                 map3DElement.addEventListener('gmp-steadystate', ({ isSteady }: any) => {
                     if (isSteady) {
+                        console.log('3D Map loaded successfully');
                         setIsLoading(false);
                     }
-                }, { once: true });
+                });
 
                 // Handle errors
                 map3DElement.addEventListener('gmp-error', (err: any) => {
                     console.error('3D Map error:', err);
-                    setError('Gagal memuat peta 3D. Fitur ini memerlukan API key dengan akses Maps 3D (beta).');
+                    setError('Gagal memuat peta 3D. Terjadi kesalahan saat memuat.');
                     setIsLoading(false);
                 });
 
@@ -60,13 +87,12 @@ export default function Map3DView({ center, onClose }: Map3DViewProps) {
 
             } catch (err) {
                 console.error('Error initializing 3D map:', err);
-                setError('Gagal memuat peta 3D. Pastikan koneksi internet stabil dan API key valid.');
+                setError('Gagal memuat peta 3D. Pastikan koneksi internet stabil.');
                 setIsLoading(false);
             }
         };
 
-        // Start initialization
-        initMap3D();
+        loadScriptAndInitMap();
 
         // Cleanup
         return () => {
@@ -85,6 +111,9 @@ export default function Map3DView({ center, onClose }: Map3DViewProps) {
             <div className="absolute inset-0 bg-white z-50 flex items-center justify-center">
                 <div className="text-center p-8 max-w-md">
                     <p className="text-red-600 font-semibold mb-4">{error}</p>
+                    <p className="text-gray-600 text-sm mb-6">
+                        Fitur 3D memerlukan API key dengan akses Maps 3D (beta).
+                    </p>
                     <button
                         onClick={onClose}
                         className="px-6 py-3 bg-[var(--color-light-blue)] text-white rounded-lg hover:opacity-90 transition-opacity"
